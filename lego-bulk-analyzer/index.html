@@ -1,0 +1,527 @@
+<title>Brick Lot Appraiser</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: two-pane workbench on wide screens (lot inputs | appraisal report), one column on phones. */
+:root {
+  --bg: #eceef0;          /* light bluish grey, like a baseplate */
+  --panel: #ffffff;
+  --ink: #1b2430;
+  --muted: #5d6874;
+  --line: #d3d8de;
+  --accent: #c91a09;      /* brick red: primary actions */
+  --accent-ink: #ffffff;
+  --yellow: #f2cd37;      /* brick yellow: highlights, used as a fill only */
+  --good: #237841;
+  --good-bg: #e2f2e7;
+  --warn: #9a6400;
+  --warn-bg: #fbf0d6;
+  --bad: #b3261e;
+  --bad-bg: #fbe4e1;
+  --stud: rgba(27, 36, 48, .06);
+  --font-display: "Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14191f; --panel: #1d242c; --ink: #e9edf1; --muted: #9aa5b1; --line: #2f3944;
+    --accent: #ef4b3a; --accent-ink: #ffffff; --yellow: #f2cd37;
+    --good: #6fd08f; --good-bg: #183324; --warn: #f0c060; --warn-bg: #3a2e12;
+    --bad: #ff8a80; --bad-bg: #3d1d1a; --stud: rgba(233, 237, 241, .05);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14191f; --panel: #1d242c; --ink: #e9edf1; --muted: #9aa5b1; --line: #2f3944;
+  --accent: #ef4b3a; --accent-ink: #ffffff; --yellow: #f2cd37;
+  --good: #6fd08f; --good-bg: #183324; --warn: #f0c060; --warn-bg: #3a2e12;
+  --bad: #ff8a80; --bad-bg: #3d1d1a; --stud: rgba(233, 237, 241, .05);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
+
+header.top {
+  display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px;
+  padding-block: 18px 6px;
+  background-image: radial-gradient(circle at 10px 10px, var(--stud) 5px, transparent 5.5px);
+  background-size: 20px 20px;
+  background-position: right top;
+}
+h1 {
+  font: 800 clamp(28px, 6vw, 42px)/1.05 var(--font-display);
+  letter-spacing: -.01em; margin: 0; text-wrap: balance;
+}
+h1 .dot { display: inline-block; width: .5em; height: .5em; border-radius: 50%; background: var(--yellow); margin-left: .12em; vertical-align: .08em; }
+.lede { margin: 6px 0 0; color: var(--muted); max-width: 58ch; }
+h2 { font: 700 19px/1.2 var(--font-display); margin: 0; }
+h3 { font: 600 13px/1.3 var(--font-body); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0; }
+
+.grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 16px; min-width: 0; }
+
+label.f { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
+label.f small { font-weight: 400; color: var(--muted); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+input[type="number"], input[type="text"], select, textarea {
+  font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px 12px; width: 100%; min-width: 0;
+}
+textarea { resize: vertical; min-height: 70px; }
+.money { position: relative; }
+.money span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-family: var(--font-mono); pointer-events: none; }
+.money input { padding-left: 30px; font-family: var(--font-mono); font-size: 17px; }
+:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+
+.drop {
+  border: 2px dashed var(--line); border-radius: var(--radius); padding: 18px; text-align: center;
+  display: grid; gap: 6px; justify-items: center; cursor: pointer; transition: border-color .15s, background .15s;
+}
+.drop:hover, .drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.drop strong { font-family: var(--font-display); font-size: 16px; }
+.drop small { color: var(--muted); }
+#photo-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; }
+.thumb { position: relative; aspect-ratio: 1; max-width: 100%; border-radius: 8px; overflow: hidden; background: var(--bg); border: 1px solid var(--line); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb .n { position: absolute; left: 4px; top: 4px; background: var(--yellow); color: #1b2430; font: 600 11px/1 var(--font-mono); padding: 3px 5px; border-radius: 4px; }
+.thumb button { position: absolute; right: 4px; top: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 14px; line-height: 1; cursor: pointer; }
+
+button.primary {
+  font: 700 16px/1 var(--font-display); background: var(--accent); color: var(--accent-ink);
+  border: 0; border-radius: 8px; padding: 15px 18px; cursor: pointer; width: 100%;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 60%, #000);
+}
+button.primary:active { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 60%, #000); }
+button.primary:disabled { opacity: .5; cursor: not-allowed; }
+button.ghost { font: 600 14px/1 var(--font-body); background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; cursor: pointer; }
+
+.tips { font-size: 13px; color: var(--muted); margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.note { font-size: 13px; padding: 10px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); }
+.note.err { background: var(--bad-bg); color: var(--bad); }
+
+/* Report */
+.report-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+.tag { font: 600 11px/1 var(--font-body); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.tag.example { background: var(--yellow); color: #1b2430; border-color: transparent; }
+
+.verdict { border-radius: var(--radius); padding: 18px; display: grid; gap: 10px; border: 1px solid transparent; }
+.verdict.good { background: var(--good-bg); color: var(--good); }
+.verdict.maybe { background: var(--warn-bg); color: var(--warn); }
+.verdict.bad { background: var(--bad-bg); color: var(--bad); }
+.verdict .big { font: 800 clamp(24px, 4.5vw, 32px)/1.1 var(--font-display); }
+.verdict p { margin: 0; color: var(--ink); }
+
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.fig { background: var(--bg); border-radius: 8px; padding: 12px; display: grid; gap: 2px; }
+.fig .k { font-size: 12px; color: var(--muted); }
+.fig .v { font: 500 18px/1.25 var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.section { display: grid; gap: 10px; }
+.items { display: grid; gap: 8px; }
+.item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.item.off { opacity: .45; }
+.item input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); }
+.item .name { font-weight: 600; }
+.item .meta { font-size: 13px; color: var(--muted); grid-column: 2 / 4; }
+.item .price { font: 500 14px/1.4 var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.item .links { grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; }
+.item .links a { color: var(--accent); text-underline-offset: 2px; }
+.code { font-family: var(--font-mono); font-size: 12px; background: var(--bg); padding: 2px 6px; border-radius: 4px; }
+.conf { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.conf.high { color: var(--good); } .conf.medium { color: var(--warn); } .conf.low { color: var(--bad); }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.empty { color: var(--muted); font-size: 14px; margin: 0; }
+.disclaimer { font-size: 12.5px; color: var(--muted); margin: 0; border-top: 1px solid var(--line); padding-top: 12px; }
+
+.working { display: grid; gap: 12px; justify-items: start; }
+.studs { display: flex; gap: 6px; }
+.studs i { width: 14px; height: 14px; border-radius: 50%; background: var(--line); animation: pop 1.2s infinite ease-in-out; }
+.studs i:nth-child(2) { animation-delay: .15s; } .studs i:nth-child(3) { animation-delay: .3s; } .studs i:nth-child(4) { animation-delay: .45s; }
+@keyframes pop { 0%, 100% { background: var(--line); transform: scale(1); } 40% { background: var(--accent); transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .studs i { animation: none; background: var(--accent); } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Brick Lot Appraiser<span class="dot" aria-hidden="true"></span></h1>
+      <p class="lede">Add photos of a second-hand bulk lot and the asking price. Claude picks out minifigures, valuable parts and likely sets, estimates what it all resells for, and tells you whether the lot is worth buying.</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- Inputs -->
+    <form class="panel" id="lot-form" novalidate>
+      <h2>The lot</h2>
+
+      <div class="row2">
+        <label class="f" for="price">Asking price
+          <div class="money"><span id="cur-sym">£</span><input id="price" type="number" inputmode="decimal" min="0" step="0.5" value="40"></div>
+        </label>
+        <label class="f" for="currency">Currency
+          <select id="currency">
+            <option value="GBP" selected>GBP (£)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="USD">USD ($)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="row2">
+        <label class="f" for="weight">Weight, if known <small>kg</small>
+          <input id="weight" type="number" inputmode="decimal" min="0" step="0.1" placeholder="e.g. 3.5">
+        </label>
+        <label class="f" for="fees">Selling costs <small>fees + postage, %</small>
+          <input id="fees" type="number" inputmode="decimal" min="0" max="80" step="1" value="20">
+        </label>
+      </div>
+
+      <div class="f" style="display:grid;gap:6px">
+        <span style="font-weight:600;font-size:14px">Photos <small id="photo-limit" style="font-weight:400;color:var(--muted)"></small></span>
+        <label class="drop" id="drop" for="photo-input">
+          <strong>Add photos</strong>
+          <small>Tap to choose from your camera roll, or drop files here</small>
+        </label>
+        <input id="photo-input" type="file" accept="image/*" multiple>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+
+      <label class="f" for="notes">Anything from the listing? <small>optional</small>
+        <textarea id="notes" placeholder="e.g. 'Mostly Star Wars and City from the 2010s, some instructions, 4kg'"></textarea>
+      </label>
+
+      <button class="primary" id="go" type="submit">Appraise this lot</button>
+      <div id="form-msg" hidden></div>
+
+      <ul class="tips">
+        <li>Spread pieces out on a plain surface rather than shooting the bag.</li>
+        <li>Take close-ups of minifigures, printed pieces and anything unusual.</li>
+        <li>Each photo is shrunk to about 1.2 megapixels before Claude sees it, so several close photos beat one wide one.</li>
+      </ul>
+    </form>
+
+    <!-- Report -->
+    <section class="panel" id="report" aria-live="polite"></section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const h = (tag, attrs = {}, ...kids) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : String(kid));
+    return el;
+  };
+
+  const SYMBOLS = { GBP: "£", EUR: "€", USD: "$" };
+  const state = { photos: [], maxPhotos: 20, mediaTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"], maxBytes: 20e6, sample: null, ctl: null, result: null, excluded: new Set() };
+
+  const fmt = (n, cur) => new Intl.NumberFormat(cur === "GBP" ? "en-GB" : cur === "EUR" ? "en-IE" : "en-US", { style: "currency", currency: cur, maximumFractionDigits: 0 }).format(Math.round(n || 0));
+  const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+
+  // ---------- Photos ----------
+  const thumbs = $("#thumbs");
+  function renderThumbs() {
+    thumbs.replaceChildren(...state.photos.map((p, i) =>
+      h("div", { class: "thumb" },
+        h("img", { src: p.url, alt: `Photo ${i + 1}` }),
+        h("span", { class: "n" }, i + 1),
+        h("button", { type: "button", "aria-label": `Remove photo ${i + 1}`, onclick: () => { URL.revokeObjectURL(p.url); state.photos.splice(i, 1); renderThumbs(); } }, "×"))));
+  }
+
+  // Convert anything the platform won't take (HEIC, very large files) to a JPEG.
+  async function normalise(file) {
+    if (state.mediaTypes.includes(file.type) && file.size <= state.maxBytes) return file;
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise((res, rej) => c.toBlob((b) => b ? res(b) : rej(new Error("encode")), "image/jpeg", 0.88));
+  }
+
+  async function addFiles(list) {
+    const files = [...list].filter((f) => f.type.startsWith("image/") || /\.(heic|heif)$/i.test(f.name));
+    let skipped = 0;
+    for (const f of files) {
+      if (state.photos.length >= state.maxPhotos) { skipped++; continue; }
+      try {
+        const blob = await normalise(f);
+        state.photos.push({ blob, url: URL.createObjectURL(blob) });
+      } catch { skipped++; }
+    }
+    renderThumbs();
+    if (skipped) showMsg(`${skipped} photo${skipped > 1 ? "s were" : " was"} skipped. You can add up to ${state.maxPhotos} photos, in JPEG, PNG or WebP format.`);
+    else hideMsg();
+  }
+
+  $("#photo-input").addEventListener("change", (e) => { addFiles(e.target.files); e.target.value = ""; });
+  const drop = $("#drop");
+  ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", (e) => addFiles(e.dataTransfer.files));
+  document.addEventListener("paste", (e) => { if (e.clipboardData?.files?.length) addFiles(e.clipboardData.files); });
+
+  $("#currency").addEventListener("change", (e) => { $("#cur-sym").textContent = SYMBOLS[e.target.value]; if (state.result) renderReport(state.result); });
+  $("#fees").addEventListener("input", () => { if (state.result) renderReport(state.result); });
+  $("#price").addEventListener("input", () => { if (state.result) renderReport(state.result); });
+
+  const msg = $("#form-msg");
+  function showMsg(text, err = false) { msg.className = "note" + (err ? " err" : ""); msg.textContent = text; msg.hidden = false; }
+  function hideMsg() { msg.hidden = true; }
+
+  // ---------- Claude ----------
+  function buildPrompt(cur, price, weight, notes, n) {
+    return `You are an experienced second-hand LEGO reseller in the ${cur === "GBP" ? "UK" : cur === "EUR" ? "EU" : "US"} appraising a bulk lot from ${n} photo${n > 1 ? "s" : ""} (numbered 1 to ${n} in the order given). The seller is asking ${SYMBOLS[cur]}${price} ${cur}.${weight ? ` The stated weight is ${weight} kg.` : ""}${notes ? `\nText from the listing or buyer notes: """${notes.slice(0, 2000)}"""` : ""}
+
+Work through it like this:
+1. Scan every photo for items worth selling individually: minifigures (name them, with the BrickLink minifig ID such as sw0578 only if you are confident), valuable or rare parts (printed tiles, large or specialist pieces, Technic and Power Functions or Powered Up electrics, rare colours, baseplates, animals, etc.), instructions and boxes.
+2. Identify sets the pieces probably come from. Only list a set when you can see real evidence (distinctive printed or moulded pieces, colour schemes, stickers). Estimate how complete it looks.
+3. Estimate the weight and piece count of the generic remainder and value it at typical bulk-by-weight rates.
+4. Note red flags: clone brands (Mega Bloks, Kre-O, unbranded studs), damage, bite marks, sun-yellowing, stickers peeling, Duplo or non-LEGO toys mixed in, photos too blurry to judge.
+
+Pricing rules:
+- Use realistic recent second-hand prices in ${cur} (eBay sold listings and BrickLink used prices), BEFORE selling fees. Give conservative low-high ranges.
+- Do not double count. If you list a possible set, its pieces are valued in that set only. If you list a notable item, it is not in the bulk value. bulk_value covers only what is left over.
+- For a possible set, value only the pieces that are actually present, sold as an incomplete set or as parts.
+- Do not invent items you cannot see. If you are unsure, say so with a low confidence.
+
+Reply with ONLY a JSON object in exactly this shape:
+{
+  "summary": "2-3 plain sentences about what the lot contains",
+  "photo_quality": "good" | "ok" | "poor",
+  "estimated_weight_kg": number,
+  "estimated_piece_count": number,
+  "bulk_value": { "low": number, "high": number, "basis": "short explanation, e.g. '~3 kg generic mixed bricks at 8-10 per kg'" },
+  "notable_items": [
+    { "name": "string", "kind": "minifigure" | "part" | "electronics" | "instructions" | "other", "id": "BrickLink part or minifig ID, or empty string", "photo": number, "value_low": number, "value_high": number, "confidence": "high" | "medium" | "low", "why": "short reason it is worth money" }
+  ],
+  "possible_sets": [
+    { "set_number": "e.g. 75192", "name": "string", "theme": "string", "year": number, "evidence": "what you saw, with photo numbers", "completeness_pct": number, "value_low": number, "value_high": number, "confidence": "high" | "medium" | "low" }
+  ],
+  "red_flags": ["string"],
+  "tips": ["short practical tips for inspecting or reselling this lot"]
+}`;
+  }
+
+  const ERR = {
+    not_granted: "Claude wasn't allowed to run for this page. Allow it in the page's permissions to appraise lots.",
+    sampling_disabled: "Claude isn't available on this account.",
+    rate_limited: "You've hit a usage limit for now. Try again in a little while.",
+    session_expired: "Your Claude session expired. Sign in again, then retry.",
+    image_rejected: "One of the photos couldn't be read. Try removing it or using a JPEG instead.",
+    images_unavailable: "This view can't send photos to Claude. Open the page on claude.ai in a browser or the Claude app.",
+    refused: "Claude couldn't appraise these photos. Try different photos.",
+    invalid_json: "Claude's answer came back in the wrong format. Press Appraise again.",
+    empty_completion: "Claude returned an empty answer. Try fewer photos.",
+    prompt_too_large: "The notes are too long. Shorten them and try again.",
+  };
+
+  let timer;
+  function renderWorking() {
+    const started = Date.now();
+    const secs = h("span", {}, "0s");
+    const report = $("#report");
+    report.replaceChildren(
+      h("div", { class: "working" },
+        h("h2", {}, "Sorting the pile…"),
+        h("div", { class: "studs", "aria-hidden": "true" }, h("i"), h("i"), h("i"), h("i")),
+        h("p", { class: "empty" }, `Claude is going through ${state.photos.length} photo${state.photos.length > 1 ? "s" : ""} piece by piece. This usually takes 30 seconds to 2 minutes. `, secs),
+        h("button", { class: "ghost", type: "button", onclick: () => state.ctl?.abort() }, "Stop")));
+    clearInterval(timer);
+    timer = setInterval(() => { secs.textContent = Math.round((Date.now() - started) / 1000) + "s"; }, 1000);
+  }
+
+  $("#lot-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!state.sample) { showMsg("This page needs to be opened on claude.ai (browser or Claude app) so it can ask Claude.", true); return; }
+    if (!state.photos.length) { showMsg("Add at least one photo of the lot first.", true); return; }
+    const price = num($("#price").value);
+    if (price <= 0) { showMsg("Enter the seller's asking price.", true); return; }
+    hideMsg();
+
+    const cur = $("#currency").value;
+    const prompt = buildPrompt(cur, price, num($("#weight").value), $("#notes").value.trim(), state.photos.length);
+    const btn = $("#go");
+    btn.disabled = true;
+    state.ctl = new AbortController();
+    const previous = state.result;
+    renderWorking();
+    try {
+      const data = await state.sample.json(prompt, { images: state.photos.map((p) => p.blob), modelTier: "complex", signal: state.ctl.signal });
+      state.result = { ...clean(data), cur, example: false };
+      state.excluded = new Set();
+      renderReport(state.result);
+    } catch (err) {
+      state.result = previous;
+      if (previous) renderReport(previous); else renderReport(EXAMPLE);
+      if (err?.code !== "cancelled") showMsg(ERR[err?.code] || "Something went wrong reaching Claude. Press Appraise to try again.", true);
+    } finally {
+      clearInterval(timer);
+      btn.disabled = false;
+    }
+  });
+
+  // Guard against missing or oddly-typed fields in the model's JSON.
+  function clean(d) {
+    d = d && typeof d === "object" ? d : {};
+    const arr = (a) => Array.isArray(a) ? a.filter((x) => x && typeof x === "object") : [];
+    return {
+      summary: String(d.summary || ""),
+      photo_quality: String(d.photo_quality || ""),
+      estimated_weight_kg: num(d.estimated_weight_kg),
+      estimated_piece_count: num(d.estimated_piece_count),
+      bulk_value: { low: num(d.bulk_value?.low), high: num(d.bulk_value?.high), basis: String(d.bulk_value?.basis || "") },
+      notable_items: arr(d.notable_items),
+      possible_sets: arr(d.possible_sets),
+      red_flags: (Array.isArray(d.red_flags) ? d.red_flags : []).map(String),
+      tips: (Array.isArray(d.tips) ? d.tips : []).map(String),
+    };
+  }
+
+  // ---------- Report ----------
+  const ebay = (q, cur) => {
+    const host = cur === "GBP" ? "www.ebay.co.uk" : cur === "EUR" ? "www.ebay.de" : "www.ebay.com";
+    return `https://${host}/sch/i.html?_nkw=${encodeURIComponent("lego " + q)}&LH_Sold=1&LH_Complete=1`;
+  };
+  const bricklink = (q) => `https://www.bricklink.com/v2/search.page?q=${encodeURIComponent(q)}`;
+
+  function renderReport(r) {
+    const cur = r.example ? r.cur : $("#currency").value;
+    const asking = r.example ? r.asking : num($("#price").value);
+    const fees = Math.min(80, Math.max(0, num($("#fees").value))) / 100;
+
+    const items = r.notable_items.map((it, i) => ({ ...it, key: "i" + i }));
+    const sets = r.possible_sets.map((s, i) => ({ ...s, key: "s" + i }));
+    const live = (x) => !state.excluded.has(x.key);
+    const sum = (list, f) => list.filter(live).reduce((a, x) => a + num(x[f]), 0);
+
+    const grossLow = r.bulk_value.low + sum(items, "value_low") + sum(sets, "value_low");
+    const grossHigh = r.bulk_value.high + sum(items, "value_high") + sum(sets, "value_high");
+    const netLow = grossLow * (1 - fees), netHigh = grossHigh * (1 - fees);
+    const profitLow = netLow - asking, profitHigh = netHigh - asking;
+
+    let tone, headline, line;
+    if (profitLow > 0) { tone = "good"; headline = "Worth buying"; line = `Even at the low estimate you'd clear about ${fmt(profitLow, cur)} after selling costs.`; }
+    else if (profitHigh > 0) { tone = "maybe"; headline = "Borderline"; line = `You could make up to ${fmt(profitHigh, cur)}, or lose up to ${fmt(-profitLow, cur)}. Try offering ${fmt(Math.max(0, netLow * 0.8), cur)}.`; }
+    else { tone = "bad"; headline = "Pass, or offer less"; line = `Resale looks lower than the asking price. A fair offer would be around ${fmt(Math.max(0, netLow * 0.8), cur)}.`; }
+
+    const toggle = (x) => h("input", { type: "checkbox", id: "inc-" + x.key, checked: live(x), "aria-label": "Count this in the total",
+      onchange: (e) => { e.target.checked ? state.excluded.delete(x.key) : state.excluded.add(x.key); renderReport(r); } });
+    const conf = (c) => h("span", { class: "conf " + (["high", "medium", "low"].includes(c) ? c : "low") }, (c || "low") + " confidence");
+    const range = (lo, hi) => `${fmt(lo, cur)}–${fmt(hi, cur)}`;
+
+    const itemRows = items.map((it) => h("div", { class: "item" + (live(it) ? "" : " off") },
+      toggle(it),
+      h("div", {}, h("span", { class: "name" }, it.name || "Unnamed item"), " ", it.id ? h("span", { class: "code" }, it.id) : null),
+      h("div", { class: "price" }, range(num(it.value_low), num(it.value_high))),
+      h("div", { class: "meta" }, [it.kind, it.photo ? `photo ${it.photo}` : null].filter(Boolean).join(" · "), it.why ? " — " + it.why : "", " ", conf(it.confidence)),
+      h("div", { class: "links" },
+        h("a", { href: ebay(it.id || it.name, cur), target: "_blank", rel: "noopener" }, "eBay sold prices"),
+        h("a", { href: bricklink(it.id || it.name), target: "_blank", rel: "noopener" }, "BrickLink"))));
+
+    const setRows = sets.map((s) => h("div", { class: "item" + (live(s) ? "" : " off") },
+      toggle(s),
+      h("div", {}, h("span", { class: "code" }, s.set_number || "?"), " ", h("span", { class: "name" }, s.name || "Unknown set")),
+      h("div", { class: "price" }, range(num(s.value_low), num(s.value_high))),
+      h("div", { class: "meta" }, [s.theme, s.year || null, s.completeness_pct ? `~${Math.round(num(s.completeness_pct))}% present` : null].filter(Boolean).join(" · "), s.evidence ? " — " + s.evidence : "", " ", conf(s.confidence)),
+      h("div", { class: "links" },
+        s.set_number ? h("a", { href: `https://brickset.com/sets/${encodeURIComponent(String(s.set_number).replace(/-\d+$/, ""))}-1`, target: "_blank", rel: "noopener" }, "Brickset") : null,
+        h("a", { href: ebay(s.set_number || s.name, cur), target: "_blank", rel: "noopener" }, "eBay sold prices"),
+        h("a", { href: bricklink(s.set_number || s.name), target: "_blank", rel: "noopener" }, "BrickLink"))));
+
+    const list = (arr) => arr.length ? h("ul", { class: "plain" }, arr.map((t) => h("li", {}, t))) : h("p", { class: "empty" }, "None.");
+
+    $("#report").replaceChildren(
+      h("div", { class: "report-head" },
+        h("h2", {}, "Appraisal"),
+        r.example ? h("span", { class: "tag example" }, "Example lot") : h("span", { class: "tag" }, "Photo quality: " + (r.photo_quality || "n/a"))),
+      r.example ? h("p", { class: "empty" }, "This is a made-up example to show what a report looks like. Add your own photos and asking price to appraise a real lot.") : null,
+      h("div", { class: "verdict " + tone },
+        h("div", { class: "big" }, headline),
+        h("p", {}, line)),
+      h("div", { class: "figures" },
+        h("div", { class: "fig" }, h("span", { class: "k" }, "Asking price"), h("span", { class: "v" }, fmt(asking, cur))),
+        h("div", { class: "fig" }, h("span", { class: "k" }, "Resale value"), h("span", { class: "v" }, range(grossLow, grossHigh))),
+        h("div", { class: "fig" }, h("span", { class: "k" }, `After ${Math.round(fees * 100)}% selling costs`), h("span", { class: "v" }, range(netLow, netHigh))),
+        h("div", { class: "fig" }, h("span", { class: "k" }, "Profit"), h("span", { class: "v" }, `${fmt(profitLow, cur)} to ${fmt(profitHigh, cur)}`))),
+      r.summary ? h("p", { style: "margin:0" }, r.summary) : null,
+      h("div", { class: "section" },
+        h("h3", {}, `Worth selling separately (${items.length})`),
+        items.length ? h("div", { class: "items" }, itemRows) : h("p", { class: "empty" }, "Nothing stood out as valuable on its own.")),
+      h("div", { class: "section" },
+        h("h3", {}, `Possible sets (${sets.length})`),
+        sets.length ? h("div", { class: "items" }, setRows) : h("p", { class: "empty" }, "No sets could be identified with confidence.")),
+      h("div", { class: "section" },
+        h("h3", {}, "Bulk remainder"),
+        h("div", { class: "item" },
+          h("span"),
+          h("div", {}, h("span", { class: "name" }, `~${r.estimated_weight_kg || "?"} kg, ~${r.estimated_piece_count ? r.estimated_piece_count.toLocaleString() : "?"} pieces in the whole lot`)),
+          h("div", { class: "price" }, range(r.bulk_value.low, r.bulk_value.high)),
+          h("div", { class: "meta" }, r.bulk_value.basis))),
+      h("div", { class: "section" }, h("h3", {}, "Red flags"), list(r.red_flags)),
+      h("div", { class: "section" }, h("h3", {}, "Tips"), list(r.tips)),
+      h("p", { class: "disclaimer" }, "Prices are Claude's estimates from photos and its general knowledge of the second-hand market, not live listings. Untick anything you disagree with to drop it from the total, and check the eBay sold and BrickLink links before you buy."));
+  }
+
+  const EXAMPLE = {
+    example: true, cur: "GBP", asking: 40, photo_quality: "ok",
+    summary: "A mixed 2010s lot, mostly City and Star Wars. Five minifigures are visible, plus a Power Functions motor and what looks like most of a Star Wars ship. The rest is common bricks and plates in mainstream colours.",
+    estimated_weight_kg: 3.2, estimated_piece_count: 2100,
+    bulk_value: { low: 18, high: 26, basis: "~2.4 kg of generic mixed bricks and plates at about £8–11 per kg" },
+    notable_items: [
+      { name: "Clone Trooper, Phase 2", kind: "minifigure", id: "sw0605", photo: 2, value_low: 6, value_high: 9, confidence: "medium", why: "popular figure, looks complete with helmet" },
+      { name: "Power Functions M-Motor", kind: "electronics", id: "8883", photo: 3, value_low: 7, value_high: 10, confidence: "high", why: "electrics sell well; untested" },
+      { name: "Police officer and crook minifigures (x3)", kind: "minifigure", id: "", photo: 2, value_low: 4, value_high: 6, confidence: "medium", why: "common City figures, sell as a group" },
+    ],
+    possible_sets: [
+      { set_number: "75151", name: "Clone Turbo Tank", theme: "Star Wars", year: 2016, evidence: "large white wheels with red printed panels in photos 1 and 4", completeness_pct: 60, value_low: 20, value_high: 30, confidence: "medium" },
+    ],
+    red_flags: ["A few light-grey pieces in photo 4 look like a clone brand. Check for the LEGO logo on the studs.", "Some white bricks look slightly yellowed."],
+    tips: ["Ask the seller if the Clone Turbo Tank instructions are included.", "Test the motor with a battery box before listing it."],
+  };
+
+  renderReport(EXAMPLE);
+
+  // ---------- Connect to Claude ----------
+  (async () => {
+    try {
+      const sample = await window.claude?.use?.("sample");
+      if (!sample) throw 0;
+      const lim = await sample.limits().catch(() => null);
+      if (!lim?.images) throw 0;
+      state.sample = sample;
+      state.maxPhotos = lim.images.maxCount || state.maxPhotos;
+      state.maxBytes = lim.images.maxInputBytes || state.maxBytes;
+      if (lim.images.mediaTypes?.length) state.mediaTypes = lim.images.mediaTypes;
+      $("#photo-limit").textContent = `up to ${state.maxPhotos}`;
+    } catch {
+      showMsg("Photo appraisal only works when this page is opened on claude.ai, in a browser or the Claude app. You can still look at the example report.");
+    }
+  })();
+})();
+</script>
