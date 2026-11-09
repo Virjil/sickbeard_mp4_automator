@@ -220,6 +220,39 @@ details.manual[open] summary{margin-bottom:12px}
 .pair .two{display:flex;gap:6px}
 .pair .two .mini{width:auto;flex:1;height:72px}
 
+/* inspiration */
+.inspo-pick{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.inspo-ph{position:relative;width:76px;height:96px;border-radius:12px;overflow:hidden;background:var(--tile);border:1px solid var(--line);flex:none}
+.inspo-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.inspo-ph button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:var(--surface);display:grid;place-items:center;padding:0}
+.inspo-ph button svg{width:14px;height:14px}
+.add-ph{width:76px;height:96px;border-radius:12px;border:1.5px dashed var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;color:var(--muted);flex:none;font-size:12px;font-weight:500;cursor:pointer}
+.add-ph svg{width:24px;height:24px}
+.add-ph input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.add-ph[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.brief textarea.note-in{font-family:var(--f-body);font-size:16px;min-height:52px}
+.inspo-hero{display:grid;grid-template-columns:minmax(120px,38%) 1fr;gap:14px}
+.shots{display:grid;gap:6px;grid-template-columns:1fr 1fr;align-content:start}
+.shots img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:10px;display:block;background:var(--tile)}
+.shots img:only-child{grid-column:1 / -1}
+.el{display:grid;grid-template-columns:44px 1fr 52px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.el:first-child{border-top:0}
+.el > div{min-width:0}
+.el small{display:block;color:var(--muted);font-size:12.5px;line-height:1.35}
+.el .target{width:44px;height:52px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center}
+.el .target svg{width:80%;height:80%}
+.el .none{width:52px;height:62px;border-radius:9px;border:1.5px dashed var(--saffron);display:grid;place-items:center;font:600 9px/1.2 var(--f-mono);letter-spacing:.06em;color:var(--muted);text-transform:uppercase;text-align:center;padding:2px}
+.q{display:inline-block;font:600 9.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;border-radius:5px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+.q.exact{background:var(--good);color:var(--bg)}
+.q.close{background:var(--plum);color:var(--on-plum)}
+.q.stand-in{background:var(--saffron-soft);color:var(--ink)}
+.q.none{background:var(--tile);color:var(--muted)}
+.moves{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+.bare{background:none;border:0;padding:0;margin:0;text-align:left;color:inherit;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-width:0}
+.board img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:12px;background:var(--tile);display:block}
+.board b{font-family:var(--f-display);font-size:16px;line-height:1.1}
+
 /* flat lay */
 .flat{display:grid;gap:8px;grid-template-columns:1fr 1.25fr 0.8fr;align-items:start;background:var(--tile);border-radius:16px;padding:10px}
 .flat.no-outer{grid-template-columns:1.3fr 0.8fr}
@@ -455,6 +488,7 @@ const S = {
   sheet:null, toast:null, anchorId:null,
   styleResult: loadLS('fr.style', null), styleBusy:false, styleErr:null, styleCtl:null,
   shop:null, gaps:null,
+  inspiration:[], ins:null, inspoDraft:[], maxImages:1, styleMode: loadLS('fr.mode', 'vibe') === 'photo' ? 'photo' : 'vibe',
 };
 const listeners = new Set();
 let emitQueued = false;
@@ -512,7 +546,7 @@ async function init() {
   const [db, assets, sample, downloads, user] = await Promise.all(['db', 'assets', 'sample', 'downloads', 'user'].map(get));
   Object.assign(S, {db, assets, sample, downloads, user});
   if (user) { try { S.isOwner = await user.isOwner(); } catch {} }
-  if (sample && typeof sample.limits === 'function') { try { const l = await sample.limits(); S.imagesOK = !!(l && l.images); } catch {} }
+  if (sample && typeof sample.limits === 'function') { try { const l = await sample.limits(); S.imagesOK = !!(l && l.images); S.maxImages = (l && l.images && l.images.maxCount) || 1; } catch {} }
   S.caps = db ? 'ready' : 'none';
   emit();
   if (db) subscribe();
@@ -520,7 +554,7 @@ async function init() {
 function subscribe() {
   const timer = setTimeout(() => { if (!S.confirmed) { S.slow = true; emit(); } }, 10000);
   const seen = snap => { if (snap && snap.metadata && !snap.metadata.fromCache && !S.confirmed) { S.confirmed = true; S.slow = false; clearTimeout(timer); } };
-  for (const name of ['items', 'outfits', 'wears', 'photos', 'wishlist']) {
+  for (const name of ['items', 'outfits', 'wears', 'photos', 'wishlist', 'inspiration']) {
     S.db.collection(name).onSnapshot(snap => {
       S[name] = snap.docs.map(d => ({id: d.id, ...d.data()}));
       S.loaded[name] = true; seen(snap);
@@ -608,6 +642,7 @@ const ERR_COPY = {
   rate_limited: 'Claude asked us to slow down. Wait a minute, then try again.',
   session_expired: 'You’ve been signed out of Claude. Sign in again and retry.',
   no_outfits: 'The stylist couldn’t build complete outfits from what you own. Try a broader brief or add more pieces.',
+  no_look: 'Couldn’t find an outfit in that photo. Try a clearer shot that shows the whole look.',
 };
 const errCopy = e => ERR_COPY[(e && e.code)] || (AI_OFF.has(e && e.code) ? 'Claude isn’t available to this page right now.' : 'Something went wrong. Try again.');
 
@@ -809,13 +844,14 @@ function stylePrompt(brief, weather, anchorId, pool) {
   const anchor = anchorId && pool.find(i => i.id === anchorId);
   const loved = S.outfits.filter(o => o.loved).slice(0, 8).map(o => '- ' + o.name + ': ' + arr(o.itemIds).join(', ')).join('\n');
   const recent = S.wears.filter(x => daysAgo(x.date) <= 6).flatMap(x => arr(x.itemIds));
+  const inspo = [...S.inspiration].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 6).map(x => '- ' + x.name + ': ' + str(x.summary).slice(0, 140)).join('\n');
   return `You are a sharp, warm personal stylist. Build outfits ONLY from the wardrobe below, citing item ids exactly.
 
 Brief: ${brief}
 Weather: ${weather && weather !== 'Any' ? weather : 'not specified'}
 ${anchor ? 'Every outfit must include: ' + anchor.id + ' (' + anchor.name + ')\n' : ''}About them:
 ${aboutMe()}
-${loved ? 'Looks they loved before (taste signal):\n' + loved + '\n' : ''}${recent.length ? 'Worn in the last week, so use sparingly: ' + [...new Set(recent)].join(', ') + '\n' : ''}
+${loved ? 'Looks they loved before (taste signal):\n' + loved + '\n' : ''}${inspo ? 'Looks they saved as inspiration (taste signal):\n' + inspo + '\n' : ''}${recent.length ? 'Worn in the last week, so use sparingly: ' + [...new Set(recent)].join(', ') + '\n' : ''}
 Wardrobe (id | name | type | colours | pattern | formality 1-5 | heat 1-5 | vibes | seasons | wear count):
 ${styleLines(pool)}
 
@@ -893,13 +929,103 @@ ${silList()}`, {images: [blob]});
   } catch (e) { if (AI_OFF.has(e && e.code)) S.aiOff = e.code; S.shop = {...S.shop, busy: false, err: errCopy(e)}; }
   emit();
 }
+function setStyleMode(m) { S.styleMode = m; saveLS('fr.mode', m); emit(); }
+function addInspoFiles(fileList) {
+  const max = Math.max(1, Math.min(4, S.maxImages || 1));
+  const files = Array.from(fileList || []).filter(f => f && ((f.type || '').startsWith('image/') || /\.(heic|heif|jpe?g|png|webp|gif)$/i.test(f.name || '')));
+  for (const f of files) {
+    if (S.inspoDraft.length >= max) { toast('Up to ' + max + ' photos per look.'); break; }
+    let preview = ''; try { preview = URL.createObjectURL(f); } catch {}
+    S.inspoDraft = [...S.inspoDraft, {id: uid('d'), file: f, preview}];
+  }
+  emit();
+}
+function inspoPrompt(note, pool, n) {
+  return `You are a personal stylist helping someone recreate a look they love. ${n > 1 ? 'The ' + n + ' photos show the look or mood they want; treat them together and find the shared look, palette and key pieces.' : 'The photo shows the look they want.'}
+${note ? 'What they said about it: ' + note + '\n' : ''}About them:
+${aboutMe()}
+
+Their wardrobe (id | name | type | colours | pattern | formality 1-5 | heat 1-5 | vibes | seasons | wear count):
+${styleLines(pool) || '(empty so far)'}
+
+1. Break the look into its elements: every garment, shoe, bag and accessory that matters.
+2. For each element pick the owned item that best stands in for it (its id), or null if nothing they own works. Rate the match: exact (same kind of piece, colour and shape), close (same idea, small differences), stand-in (different piece doing the same job), none.
+3. Name the styling moves that make it work (tucks, rolled sleeves, proportions, layering, colour story, hair or make-up if central).
+4. Give exactly 3 options:
+   - "Closest match": the most faithful version, using owned pieces plus at most 2 pieces to buy (in missing).
+   - "Wear it today": only owned pieces and no purchases; capture the spirit.
+   - "Your spin": adapted to them (their notes, body, the season) while keeping what makes the look work; up to 1 purchase.
+
+Reply with only JSON:
+{"name":"2-4 word name for the look","summary":"2 sentences on what makes this look work","elements":[{"name":"Charcoal oversized blazer","category":"outerwear","silhouette":"blazer","hex":"#3a3b3f","match":"owned id or null","quality":"exact|close|stand-in|none","note":"short: how their piece compares, or what to look for"}],"moves":["short styling move"],"options":[{"name":"Closest match","itemIds":["owned ids"],"how":"1-2 sentences","tip":"one styling tip","missing":[{"name":"Colour + item","category":"...","silhouette":"...","hex":"#rrggbb","why":"short"}]}],"buys":[{"name":"Colour + item","category":"...","silhouette":"...","hex":"#rrggbb","why":"why it is the highest-impact buy for this look"}]}
+Rules: never put an id that is not in the wardrobe list in itemIds or match. "Wear it today" has an empty missing list. buys: up to 3, most impactful first. If the photos show no outfit, reply {"name":"","summary":"what you see instead","elements":[],"options":[]}.
+Allowed categories: ${CAT_KEYS.join(', ')}. Silhouettes:
+${silList()}`;
+}
+async function runInspo(note, again) {
+  if (!aiReady() || !S.imagesOK) return;
+  const prevResult = S.ins && S.ins.result;
+  S.ins = {busy: true, again: !!again}; emit();
+  try {
+    const blobs = []; let previews = [], imageIds = null;
+    if (again) {
+      imageIds = arr(again.imageIds); note = again.note || '';
+      for (const id of imageIds) { const r = await fetch(imgUrl(id)); if (!r.ok) throw {code: 'missing_photo'}; blobs.push(await r.blob()); }
+      previews = imageIds.map(imgUrl);
+    } else {
+      const draft = S.inspoDraft; if (!draft.length) { S.ins = null; emit(); return; }
+      for (const d of draft) blobs.push((await prepPhoto(d.file)).blob);
+      previews = draft.map(d => d.preview);
+    }
+    const pool = activeItems(), ids = new Set(pool.map(i => i.id));
+    const res = await S.sample.json(inspoPrompt(note, pool, blobs.length), {images: blobs, cache: false});
+    const elements = arr(res && res.elements).slice(0, 10).map(e => {
+      const m = normMissing(e); if (!m) return null;
+      const match = ids.has(str(e.match)) ? str(e.match) : null;
+      let q = ['exact', 'close', 'stand-in', 'none'].includes(e.quality) ? e.quality : (match ? 'close' : 'none');
+      if (!match) q = 'none'; else if (q === 'none') q = 'stand-in';
+      return {...m, note: str(e.note).slice(0, 160), match, quality: q};
+    }).filter(Boolean);
+    const lookName = str(res && res.name).slice(0, 60);
+    const options = arr(res && res.options).slice(0, 3).map(o => ({
+      key: uid('o'), name: str(o && o.name).slice(0, 60) || 'Option',
+      itemIds: [...new Set(arr(o && o.itemIds).map(String).filter(id => ids.has(id)))],
+      why: str(o && o.how).slice(0, 420), tip: str(o && o.tip).slice(0, 260),
+      missing: arr(o && o.missing).slice(0, 3).map(normMissing).filter(Boolean),
+      brief: 'Inspired by ' + (lookName || 'a photo'),
+    })).filter(o => o.itemIds.length || o.missing.length);
+    if (!elements.length && !options.length) throw {code: 'no_look', detail: str(res && res.summary)};
+    const doc = {
+      name: lookName || 'Saved look', summary: str(res && res.summary).slice(0, 400), note: str(note).slice(0, 400),
+      elements, moves: arr(res && res.moves).map(m => str(m).slice(0, 160)).filter(Boolean).slice(0, 6), options,
+      buys: arr(res && res.buys).slice(0, 3).map(normMissing).filter(Boolean),
+      createdAt: again ? (again.createdAt || Date.now()) : Date.now(), updatedAt: Date.now(),
+    };
+    let id = again ? again.id : null;
+    if (!again && canAdd()) { try { imageIds = []; for (const b of blobs) imageIds.push((await S.assets.upload(b, {type: 'image/jpeg'})).id); } catch { imageIds = null; } }
+    if (imageIds && imageIds.length && canWrite()) { id = id || uid('in'); if (!(await w('inspiration/' + id, 'set', {...doc, imageIds}))) id = again ? again.id : null; }
+    S.ins = {result: {...doc, id, imageIds: imageIds || []}, previews};
+    if (!again) S.inspoDraft = [];
+  } catch (e) {
+    if (AI_OFF.has(e && e.code)) S.aiOff = e.code;
+    S.ins = {err: e && e.code === 'no_look' && e.detail ? 'Couldn’t find an outfit to recreate: ' + e.detail : errCopy(e), result: again ? prevResult : null, previews: again && prevResult ? arr(prevResult.imageIds).map(imgUrl) : []};
+  }
+  emit();
+}
+function openInspo(doc) { S.ins = {result: clean(doc), previews: arr(doc.imageIds).map(imgUrl)}; S.styleMode = 'photo'; saveLS('fr.mode', 'photo'); if (S.route === 'style') { try { scrollTo(0, 0); } catch {} emit(); } else go('style'); }
+async function deleteInspo(doc) {
+  if (!(await w('inspiration/' + doc.id, 'delete'))) return;
+  if (S.assets) for (const aid of arr(doc.imageIds)) { try { await S.assets.delete(aid); } catch {} }
+  if (S.ins && S.ins.result && S.ins.result.id === doc.id) S.ins = null;
+  toast('Removed from your inspiration board.'); emit();
+}
 async function boughtIt() {
   const f = S.shop && S.shop.file; if (!f) return;
   S.shop = null; emit(); go('add'); await addPhotos([f]);
 }
 async function downloadBackup() {
   if (!S.downloads) { toast('Downloads aren’t available in this view.'); return; }
-  const data = JSON.stringify({app: 'Fitting Room', exportedAt: new Date().toISOString(), profile: S.profile, items: S.items, outfits: S.outfits, wears: S.wears, wishlist: S.wishlist}, null, 2);
+  const data = JSON.stringify({app: 'Fitting Room', exportedAt: new Date().toISOString(), profile: S.profile, items: S.items, outfits: S.outfits, wears: S.wears, wishlist: S.wishlist, inspiration: S.inspiration}, null, 2);
   try { await S.downloads.save({filename: 'fitting-room-backup-' + today() + '.json', data}); toast('Backup saved.'); }
   catch (e) { if (e && e.code !== 'declined') toast('The backup couldn’t be saved here.'); }
 }
@@ -1352,13 +1478,13 @@ function Add() {
 }
 
 /* ================= style ================= */
-function OutfitCard({o, idx, saved}) {
+function OutfitCard({o, idx, saved, eyebrow}) {
   const items = arr(o.itemIds).map(itemById).filter(Boolean);
   const isSaved = saved || (o.savedId && S.outfits.some(x => x.id === o.savedId));
   return html`<article class="look">
     <div class="doll-box"><${Doll} items=${items} missing=${arr(o.missing)}/></div>
     <div class="look-body">
-      <div class="eyebrow">Look ${idx + 1}${o.missing && o.missing.length ? ' · dashed = not owned yet' : ''}</div>
+      <div class="eyebrow">${eyebrow || 'Look ' + (idx + 1)}${o.missing && o.missing.length ? ' · dashed = not owned yet' : ''}</div>
       <h3 class="look-name">${o.name}</h3>
       <div class="minis">${items.map(it => html`<button type="button" class="mini" title=${it.name} aria-label=${it.name} onClick=${() => openItem(it.id)}><${ItemImg} item=${it}/></button>`)}</div>
     </div>
@@ -1394,6 +1520,56 @@ function ShopCheck() {
       </div></div>` : null}
   </div>`;
 }
+const QLABEL = {exact: 'You own it', close: 'Close match', 'stand-in': 'Stand-in', none: 'Missing'};
+function InspoResult({r, previews}) {
+  const [del, setDel] = useState(false);
+  const pics = arr(previews).length ? previews : arr(r.imageIds).map(imgUrl);
+  const owned = arr(r.elements).filter(e => e.match).length;
+  const busy = S.ins && S.ins.busy;
+  return html`<div style="display:flex;flex-direction:column;gap:12px">
+    <div class="panel">
+      <div class="inspo-hero">
+        <div class="shots">${pics.slice(0, 4).map(src => html`<img src=${src} alt="Inspiration photo"/>`)}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+          <span class="eyebrow num">The look · you own ${owned} of ${arr(r.elements).length} pieces</span>
+          <h3 class="look-name">${r.name}</h3>
+          ${r.summary ? html`<p>${r.summary}</p>` : null}
+          ${r.note ? html`<p class="tip"><b>You said</b>${r.note}</p>` : null}
+          ${r.id ? html`<span class="eyebrow">Saved to your inspiration board</span>` : null}
+        </div>
+      </div>
+      ${arr(r.elements).length ? html`<h2 class="sec" style="font-size:19px">Piece by piece</h2><div class="list">${r.elements.map(e => { const own = e.match && itemById(e.match); return html`<div class="el"><span class="target"><${GarmentThumb} item=${e}/></span><div><b>${e.name}</b><span class=${'q ' + (own ? e.quality : 'none')}>${QLABEL[own ? e.quality : 'none']}</span><small>${own ? 'Yours: ' + own.name + (e.note ? '. ' + e.note : '') : e.note}</small></div>${own ? html`<button class="mini" title=${own.name} aria-label=${'Your ' + own.name} onClick=${() => openItem(own.id)}><${ItemImg} item=${own}/></button>` : html`<span class="none">Not owned</span>`}</div>`; })}</div>` : null}
+      ${arr(r.moves).length ? html`<div class="eyebrow">Key moves</div><ul class="moves">${r.moves.map(m => html`<li>${m}</li>`)}</ul>` : null}
+    </div>
+    ${arr(r.options).length ? html`<h2 class="sec">Ways to get it</h2>${r.options.map((o, i) => html`<${OutfitCard} key=${o.key} o=${o} idx=${i} eyebrow=${'Option ' + (i + 1)}/>`)}` : null}
+    ${arr(r.buys).length ? html`<div class="panel"><h2 class="sec">Biggest-impact buys</h2><div class="list">${r.buys.map(m => html`<div class="li"><span class="miss-pic" style="width:48px;height:56px"><${GarmentThumb} item=${m}/></span><div><b>${m.name}</b><small>${m.why}</small></div><button class="btn sm soft" disabled=${!canWrite() || inWishlist(m)} onClick=${() => addWish(m, 'inspo')}>${inWishlist(m) ? 'Listed' : '+ Wishlist'}</button></div>`)}</div></div>` : null}
+    ${r.id && canWrite() ? html`<div class="row">
+      <button class="btn sm soft" disabled=${busy || !aiReady() || !S.imagesOK} onClick=${() => runInspo('', r)}>Re-check against my closet</button>
+      ${del ? html`<button class="btn sm warn" onClick=${() => deleteInspo(r)}>Remove for good</button><button class="btn sm ghost" onClick=${() => setDel(false)}>Keep</button>` : html`<button class="btn sm ghost" onClick=${() => setDel(true)}>Remove from board</button>`}
+    </div>` : null}
+  </div>`;
+}
+function InspoPanel() {
+  const [note, setNote] = useState('');
+  const ins = S.ins, r = ins && ins.result;
+  const max = Math.max(1, Math.min(4, S.maxImages || 1));
+  const ok = aiReady() && S.imagesOK;
+  return html`<div class="brief">
+      <div class="eyebrow">Inspiration photos</div>
+      <div class="inspo-pick">
+        ${S.inspoDraft.map(d => html`<div class="inspo-ph" key=${d.id}>${d.preview ? html`<img src=${d.preview} alt="Inspiration photo"/>` : null}<button type="button" aria-label="Remove this photo" onClick=${() => { S.inspoDraft = S.inspoDraft.filter(x => x !== d); emit(); }}>${I.close()}</button></div>`)}
+        ${S.inspoDraft.length < max ? html`<label class="add-ph" aria-disabled=${!ok}>${I.photos()}<span>Add photo</span><input id="inspo-input" type="file" accept="image/*" multiple=${max > 1} disabled=${!ok} onChange=${e => { addInspoFiles(e.target.files); e.target.value = ''; }} aria-label="Add inspiration photos"/></label>` : null}
+      </div>
+      <p class="sub">Screenshots from Instagram, Pinterest, a magazine or a shop window all work. Add up to ${max} ${max === 1 ? 'photo' : 'photos of the same look or mood'}.</p>
+      <label class="vh" for="inspo-note">What you love about it</label>
+      <textarea id="inspo-note" class="note-in" rows="2" placeholder="Love the trousers and the slouchy feel, want it for the office…" value=${note} onInput=${e => setNote(e.target.value)}></textarea>
+      <div class="row"><button class="btn" disabled=${!S.inspoDraft.length || !ok || (ins && ins.busy)} onClick=${() => runInspo(note.trim())}>${I.spark()} Show me how</button></div>
+      ${ins && ins.busy ? html`<${Thinking} text=${ins.again ? 'Re-checking against your closet…' : 'Breaking the look down and raiding your rail… usually 30–90 seconds.'}/>` : null}
+      ${ins && ins.err ? html`<p style="color:var(--bad)">${ins.err}</p>` : null}
+      ${!S.sample && S.caps !== 'loading' ? html`<p class="sub">Recreating a look needs this page open in Claude.</p>` : S.aiOff ? html`<p class="sub">Claude isn’t available to this page right now${S.aiOff === 'not_granted' ? '. Reload to be asked again.' : '.'}</p>` : S.sample && !S.imagesOK ? html`<p class="sub">This view can’t send photos to Claude. Open the page in the Claude app or on claude.ai.</p>` : null}
+    </div>
+    ${r ? html`<${InspoResult} key=${r.id || 'fresh'} r=${r} previews=${ins.previews}/>` : null}`;
+}
 function Style() {
   const res = S.styleResult;
   const [brief, setBrief] = useState(res ? res.brief : ''); const [weather, setWeather] = useState(res ? res.weather || 'Any' : 'Any');
@@ -1401,8 +1577,9 @@ function Style() {
   const pool = activeItems();
   const go2 = () => { const b = brief.trim(); if (b) runStylist(b, weather); };
   return html`<section class="view">
-    <div class="vhead"><h1>Style <em>me</em></h1><p class="sub">Say how you want to feel, from boardroom to out-out. The stylist only uses what’s on your rail, and flags the one or two pieces that would make a look pop.</p></div>
-    <div class="brief">
+    <div class="vhead"><h1>Style <em>me</em></h1><p class="sub">Say how you want to feel, from boardroom to out-out, or show it a photo of a look you love. The stylist works from what’s on your rail and flags the one or two pieces that would make it pop.</p></div>
+    <${Seg} label="Style from" value=${S.styleMode} onChange=${setStyleMode} options=${[['vibe', 'Describe a vibe'], ['photo', 'Recreate a photo']]}/>
+    ${S.styleMode === 'photo' ? html`<${InspoPanel}/>` : html`<div class="brief">
       <label class="vh" for="brief-in">Describe the vibe</label>
       <textarea id="brief-in" rows="2" placeholder="Drinks with the girls, want to feel hot but it’s freezing…" value=${brief} onInput=${e => setBrief(e.target.value)} onKeyDown=${e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) go2(); }}></textarea>
       <div class="chips">${BRIEFS.map(([l, t]) => html`<${Chip} on=${brief === t} onClick=${() => setBrief(t)}>${l}</${Chip}>`)}</div>
@@ -1419,7 +1596,7 @@ function Style() {
     ${res && res.outfits ? html`<div style="display:flex;flex-direction:column;gap:12px">
       <div class="vhead"><span class="eyebrow">For “${res.brief}”${res.weather && res.weather !== 'Any' ? ' · ' + res.weather.toLowerCase() : ''}</span>${res.read ? html`<p>${res.read}</p>` : null}</div>
       <div class="looks-2" style="display:flex;flex-direction:column;gap:12px">${res.outfits.map((o, i) => html`<${OutfitCard} key=${o.key} o=${o} idx=${i}/>`)}</div>
-    </div>` : null}
+    </div>` : null}`}
     <${ShopCheck}/>
   </section>`;
 }
@@ -1436,9 +1613,13 @@ function Looks() {
   }, [S.outfits, S.wears, S.items]);
   const diary = [...S.wears].sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.at || 0) - (a.at || 0)).slice(0, 12);
   return html`<section class="view">
-    <div class="vhead"><h1>Look<em>book</em></h1><p class="sub">Saved outfits, the pairings that keep working, and a diary of what you actually wore.</p></div>
-    ${looks.length ? html`<div class="lookbook">${looks.map(o => { const items = arr(o.itemIds).map(itemById).filter(Boolean); const n = wearsByLook.get(o.id) || 0; return html`<div class="lb" key=${o.id} style="position:relative"><button type="button" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:8px" onClick=${() => openLook({...o, savedId: o.id})}><div class="doll-box"><${Doll} items=${items} missing=${arr(o.missing)}/></div><h3>${o.name}</h3><span class="tagline num">${n ? 'Worn ' + n + '×' : 'Not worn yet'} · ${items.length} pieces</span></button><button class="heart" aria-pressed=${!!o.loved} aria-label=${o.loved ? 'Unlove look' : 'Love look'} disabled=${!canWrite()} onClick=${() => w('outfits/' + o.id, 'update', {loved: !o.loved})}>${I.heart(o.loved)}</button></div>`; })}</div>` :
+    <div class="vhead"><h1>Look<em>book</em></h1><p class="sub">Saved outfits, looks you want to recreate, the pairings that keep working, and a diary of what you actually wore.</p></div>
+    ${looks.length ? html`<div class="lookbook">${looks.map(o => { const items = arr(o.itemIds).map(itemById).filter(Boolean); const n = wearsByLook.get(o.id) || 0; return html`<div class="lb" key=${o.id} style="position:relative"><button type="button" class="bare" style="gap:8px" onClick=${() => openLook({...o, savedId: o.id})}><div class="doll-box"><${Doll} items=${items} missing=${arr(o.missing)}/></div><h3>${o.name}</h3><span class="tagline num">${n ? 'Worn ' + n + '×' : 'Not worn yet'} · ${items.length} pieces</span></button><button class="heart" aria-pressed=${!!o.loved} aria-label=${o.loved ? 'Unlove look' : 'Love look'} disabled=${!canWrite()} onClick=${() => w('outfits/' + o.id, 'update', {loved: !o.loved})}>${I.heart(o.loved)}</button></div>`; })}</div>` :
       html`<${Empty} title="No saved looks yet" action=${html`<a class="btn" href="#style">Get styled</a>`}>Ask the stylist for a vibe and save the outfits you like. Hearting a look teaches the stylist your taste.</${Empty}>`}
+    <div class="panel"><h2 class="sec">Inspiration board <small class="num">${S.inspiration.length}</small></h2>
+      ${S.inspiration.length ? html`<div class="board">${[...S.inspiration].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map(x => { const el = arr(x.elements); return html`<button type="button" class="bare" key=${x.id} onClick=${() => openInspo(x)}><img src=${imgUrl(arr(x.imageIds)[0])} alt=""/><b>${x.name}</b><span class="tagline num">You own ${el.filter(e => e.match).length} of ${el.length}</span></button>`; })}</div>` :
+        html`<p class="sub">Seen a look you want? Add the photo on the Style tab and get three ways to recreate it from your closet. Each one is kept here.</p><div class="row"><a class="btn sm soft" href="#style" onClick=${() => setStyleMode('photo')}>Recreate a photo</a></div>`}
+    </div>
     <div class="two-col">
       <div class="panel"><h2 class="sec">Pairs that work</h2>
         ${pairs.length ? html`<div class="pairs">${pairs.map(p => html`<div class="pair"><div class="two"><button class="mini" onClick=${() => openItem(p.a.id)} title=${p.a.name}><${ItemImg} item=${p.a}/></button><button class="mini" onClick=${() => openItem(p.b.id)} title=${p.b.name}><${ItemImg} item=${p.b}/></button></div><span class="tagline">${p.a.name} + ${p.b.name}</span></div>`)}</div>` : html`<p class="sub">Save, love and wear looks. Pieces that keep showing up together appear here.</p>`}
@@ -1492,7 +1673,7 @@ function Insights() {
     </div>` : html`<${Empty} title="Nothing to report yet" action=${html`<a class="btn" href="#add">Add pieces</a>`}>Once your rail has a few pieces, this page shows your palette, dress-code spread, what you wear and where the gaps are.</${Empty}>`}
     <div class="two-col">
       <div class="panel"><h2 class="sec">Wishlist <small class="num">${wish.length}</small></h2>
-        ${wish.length ? html`<div class="list">${wish.map(x => html`<div class="li" key=${x.id}><span class="miss-pic" style="width:48px;height:56px"><${GarmentThumb} item=${x}/></span><div><b>${x.name}</b><small>${x.why || ''}${x.source ? ' · from ' + ({stylist: 'the stylist', gap: 'gap audit', shop: 'shop check'}[x.source] || x.source) : ''}</small></div><div class="row"><button class="btn sm soft" disabled=${!canWrite()} onClick=${() => { w('wishlist/' + x.id, 'update', {got: true, gotAt: Date.now()}); toast('Nice. Photograph it on the Add tab to put it on the rail.'); }}>Got it</button><button class="btn sm ghost" disabled=${!canWrite()} onClick=${() => w('wishlist/' + x.id, 'delete')}>Remove</button></div></div>`)}</div>` : html`<p class="sub">Pieces the stylist or gap audit suggests land here when you tap “+ Wishlist”.</p>`}
+        ${wish.length ? html`<div class="list">${wish.map(x => html`<div class="li" key=${x.id}><span class="miss-pic" style="width:48px;height:56px"><${GarmentThumb} item=${x}/></span><div><b>${x.name}</b><small>${x.why || ''}${x.source ? ' · from ' + ({stylist: 'the stylist', gap: 'gap audit', shop: 'shop check', inspo: 'an inspiration photo'}[x.source] || x.source) : ''}</small></div><div class="row"><button class="btn sm soft" disabled=${!canWrite()} onClick=${() => { w('wishlist/' + x.id, 'update', {got: true, gotAt: Date.now()}); toast('Nice. Photograph it on the Add tab to put it on the rail.'); }}>Got it</button><button class="btn sm ghost" disabled=${!canWrite()} onClick=${() => w('wishlist/' + x.id, 'delete')}>Remove</button></div></div>`)}</div>` : html`<p class="sub">Pieces the stylist or gap audit suggests land here when you tap “+ Wishlist”.</p>`}
       </div>
       <div class="panel"><h2 class="sec">Sleeping beauties</h2>
         ${sleeping.length ? html`<p class="sub">Not worn in 90+ days. Style them, or let them go.</p><div class="list">${sleeping.map(it => html`<div class="li" key=${it.id}><button class="mini" onClick=${() => openItem(it.id)}><${ItemImg} item=${it}/></button><div><b>${it.name}</b><small>${lastWorn(it.id) ? 'Last worn ' + fmtDay(lastWorn(it.id)) : 'Never logged'}</small></div><button class="btn sm soft" onClick=${() => styleAround(it.id)}>Style it</button></div>`)}</div>` : html`<p class="sub">Log what you wear for a couple of weeks and the pieces you never reach for show up here.</p>`}

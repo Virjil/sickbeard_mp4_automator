@@ -7,7 +7,8 @@ https://claude.ai/artifact/LNqdCq5bEo5vD9NHTE12td
 artifact runtime for storage (`db`), photo storage (`assets`), Claude vision and styling (`sample`), the
 owner check (`user`) and the JSON backup (`downloads`). Opened anywhere else it loads but cannot save.
 
-Sections: Closet, Add (photo queue, review), Style (stylist, shop check), Looks (lookbook, pairs, wear diary),
+Sections: Closet, Add (photo queue, review), Style (stylist from a vibe or recreate-a-photo, shop check),
+Looks (lookbook, inspiration board, pairs, wear diary),
 Insights (palette, dress-code and heat spread, gaps, wishlist, let-go history, backup), and Mock me (figure and stylist notes).
 
 To update the live app, edit the HTML and republish it to the same artifact URL.
