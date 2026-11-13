@@ -220,6 +220,20 @@ details.manual[open] summary{margin-bottom:12px}
 .pair .two{display:flex;gap:6px}
 .pair .two .mini{width:auto;flex:1;height:72px}
 
+/* identity + completeness */
+.flag.use{top:auto;bottom:7px;background:var(--plum);color:var(--on-plum)}
+.what{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.pill{display:inline-flex;align-items:center;font:600 10.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:6px;background:var(--plum);color:var(--on-plum);white-space:nowrap}
+.pill.soft{background:var(--tile);color:var(--ink)}
+.complete{display:flex;gap:10px;align-items:flex-start;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.4}
+.complete svg{width:18px;height:18px;flex:none;margin-top:1px}
+.complete.ok{background:color-mix(in srgb,var(--good) 15%,transparent)}
+.complete.ok svg{color:var(--good)}
+.complete.need{background:var(--saffron-soft)}
+.complete.need svg{color:var(--warn)}
+.miss-pic.need{border-color:var(--bad);border-style:solid}
+.mgroup{display:flex;flex-direction:column;gap:8px}
+
 /* inspiration */
 .inspo-pick{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .inspo-ph{position:relative;width:76px;height:96px;border-radius:12px;overflow:hidden;background:var(--tile);border:1px solid var(--line);flex:none}
@@ -382,6 +396,12 @@ const HEAT = ['Covered','Relaxed','Flirty','Bold','Scorching'];
 const SEASONS = ['spring','summer','autumn','winter'];
 const PATTERNS = ['solid','stripe','check','floral','dots','animal','graphic','denim','knit','sequin','other'];
 const DISCARD_REASONS = ['Donated','Sold','Binned','Gifted','Doesn’t fit','Worn out'];
+const USES = [['everyday','Everyday'],['work','Workwear'],['occasion','Occasion'],['lounge','Loungewear'],['sleep','Sleepwear'],['active','Activewear'],['swim','Swimwear'],['underwear','Underwear']];
+const USE_LABEL = Object.fromEntries(USES);
+const USE_KEYS = USES.map(u => u[0]);
+const HOME_USES = ['sleep', 'lounge', 'underwear', 'swim'];
+const WEAROUT = {yes: 'Wear anywhere', styled: 'Can go out if styled', no: 'Keep it for home'};
+const USE_GUIDE = 'everyday (normal daywear), work (office or tailoring), occasion (evening, events, going out), lounge (made for relaxing at home), sleep (pyjamas, nightdresses, chemises, sleep shirts), active (gym and sport), swim (swimwear and cover-ups), underwear (bras, briefs, slips, shapewear, bodysuits made as lingerie)';
 const SIL_GROUPS = {
   top:['tee','long-sleeve','tank','cami','crop-top','shirt','blouse','sweater','turtleneck','hoodie','bodysuit','corset','tube-top'],
   bottom:['jeans','trousers','wide-trousers','leggings','joggers','shorts','mini-skirt','midi-skirt','maxi-skirt','pencil-skirt'],
@@ -393,6 +413,8 @@ const SIL_GROUPS = {
   active:['sports-bra','leggings','shorts','joggers','tank','tee','hoodie','sneakers'],
   intimates:['bra','briefs','bikini-top','bikini-bottom','swimsuit','bodysuit','corset','tights'],
 };
+SIL_GROUPS.top.push('pyjama-top'); SIL_GROUPS.bottom.push('pyjama-bottoms', 'pyjama-shorts'); SIL_GROUPS.dress.push('nightdress', 'chemise', 'onesie'); SIL_GROUPS.outerwear.push('robe');
+SIL_GROUPS.intimates.push('pyjama-top', 'pyjama-bottoms', 'pyjama-shorts', 'nightdress', 'chemise', 'robe');
 const DEFAULT_SIL = {top:'tee',bottom:'trousers',dress:'midi-dress',outerwear:'jacket',shoes:'sneakers',bag:'shoulder-bag',accessory:'necklace',active:'leggings',intimates:'bra'};
 const SIL = {
   tee:{k:'top',sl:'short',hem:198,nk:'crew'}, 'long-sleeve':{k:'top',sl:'long',hem:198,nk:'crew'},
@@ -421,6 +443,9 @@ const SIL = {
   belt:{k:'acc',st:'belt'}, hat:{k:'acc',st:'hat'}, cap:{k:'acc',st:'cap'}, beanie:{k:'acc',st:'beanie'}, scarf:{k:'acc',st:'scarf'},
   necklace:{k:'acc',st:'necklace'}, earrings:{k:'acc',st:'earrings'}, bracelet:{k:'acc',st:'bracelet'}, watch:{k:'acc',st:'bracelet'},
   sunglasses:{k:'acc',st:'sunglasses'}, tie:{k:'acc',st:'tie'}, tights:{k:'acc',st:'tights'}, socks:{k:'acc',st:'socks'},
+  'pyjama-top':{k:'top',sl:'long',hem:202,nk:'collar',e:5}, 'pyjama-bottoms':{k:'pants',waist:152,hem:402,e:5,fl:3}, 'pyjama-shorts':{k:'pants',waist:154,hem:246,e:4,fl:5},
+  nightdress:{k:'dress',sl:'straps',nk:'straight',hem:310,e:5,fl:14}, chemise:{k:'dress',sl:'straps',nk:'straight',hem:238,e:2,fl:6}, onesie:{k:'jumpsuit',sl:'long',nk:'crew',hem:400,e:6,fl:2},
+  robe:{k:'outer',hem:300,e:7,belt:true,vneck:true},
   bra:{k:'int',st:'bra'}, 'bikini-top':{k:'int',st:'bra'}, briefs:{k:'int',st:'briefs'}, 'bikini-bottom':{k:'int',st:'briefs'}, swimsuit:{k:'int',st:'swimsuit'},
 };
 const LAYER = {tights:1,socks:2,int:3,pants:4,skirt:5,top:6,dress:7,jumpsuit:7,tie:8,necklace:9,vest:10,belt:11,outer:12,scarf:13,shoe:14,bag:15,bracelet:16,earrings:17,sunglasses:17,hat:18,cap:18,beanie:18};
@@ -584,7 +609,22 @@ async function toJpeg(im, sx, sy, sw, sh, maxDim, q) {
   if (!blob) throw {code: 'decode'};
   return {blob, w, h};
 }
-async function prepPhoto(file) { const im = await decodeImage(file); const [W, H] = dimsOf(im); const out = await toJpeg(im, 0, 0, W, H, 1600, 0.86); if (im.close) im.close(); return out; }
+async function prepPhoto(file, withThumb) {
+  const im = await decodeImage(file); const [W, H] = dimsOf(im);
+  const out = await toJpeg(im, 0, 0, W, H, 1600, 0.86);
+  if (withThumb) { try { const t = await toJpeg(im, 0, 0, W, H, 200, 0.72); out.thumb = URL.createObjectURL(t.blob); } catch {} }
+  if (im.close) im.close();
+  return out;
+}
+let wakeLock = null;
+async function syncWake() {
+  const active = S.inflight.size > 0 || S.session.some(id => ['preparing', 'uploading'].includes((S.local[id] || {}).state));
+  try {
+    if (active && !wakeLock && navigator.wakeLock && document.visibilityState === 'visible') { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); }
+    else if (!active && wakeLock) { const l = wakeLock; wakeLock = null; await l.release(); }
+  } catch { wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncWake(); });
 function normBox(b) {
   if (!Array.isArray(b) || b.length !== 4) return null;
   let [x0, y0, x1, y1] = b.map(v => num(v, NaN));
@@ -604,12 +644,13 @@ async function addPhotos(fileList) {
   if (!files.length) return;
   if (!canAdd()) { toast(S.isOwner === false ? 'Only the wardrobe’s owner can add pieces.' : 'Adding photos isn’t available in this view.'); return; }
   S.armed = true;
-  const jobs = files.map(f => { const id = uid('ph'); let preview = ''; try { preview = URL.createObjectURL(f); } catch {} S.local[id] = {state: 'preparing', preview}; S.session.unshift(id); return [id, f]; });
+  syncWake();
+  const jobs = files.map(f => { const id = uid('ph'); S.local[id] = {state: 'preparing', preview: ''}; S.session.unshift(id); return [id, f]; });
   emit();
   for (const [id, f] of jobs) {
     try {
-      const {blob, w: W, h: H} = await prepPhoto(f);
-      setLocal(id, {state: 'uploading'});
+      const {blob, w: W, h: H, thumb} = await prepPhoto(f, true);
+      setLocal(id, {state: 'uploading', preview: thumb || ''});
       const up = await S.assets.upload(blob, {type: 'image/jpeg'});
       blobCache.set(id, blob);
       const ok = await w('photos/' + id, 'set', {sourceId: up.id, w: W, h: H, status: 'queued', addedAt: Date.now()});
@@ -619,7 +660,7 @@ async function addPhotos(fileList) {
       setLocal(id, {state: 'failed', err: c === 'decode' ? 'This photo format can’t be opened here. Try a JPEG or PNG.' : c === 'too_large' ? 'This photo is too large.' : c === 'quota_or_state' ? 'Photo storage is full.' : 'This photo couldn’t be uploaded.'});
     }
   }
-  pump();
+  pump(); syncWake();
 }
 function pump() {
   if (!S.armed || S.paused || S.aiOff || !S.sample || !S.imagesOK) return;
@@ -628,6 +669,7 @@ function pump() {
     const p = queued.shift(); S.inflight.add(p.id); emit();
     processPhoto(p).catch(() => {}).finally(() => { S.inflight.delete(p.id); emit(); setTimeout(pump, 0); });
   }
+  syncWake();
 }
 const AI_OFF = new Set(['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed', 'images_unavailable', 'tools_unavailable']);
 const ERR_COPY = {
@@ -658,17 +700,18 @@ function normItem(r) {
     vibes: [...new Set(arr(r.vibes).map(v => vibeMap[str(v).toLowerCase()]).filter(Boolean))].slice(0, 5),
     seasons: arr(r.seasons).map(s => str(s).toLowerCase()).map(s => s === 'fall' ? 'autumn' : s).filter(s => SEASONS.includes(s)),
     brand: str(r.brand).slice(0, 40), details: str(r.details).slice(0, 140),
+    use: USE_KEYS.includes(r.use) ? r.use : '', wearOut: WEAROUT[r.wearOut] ? r.wearOut : '', about: str(r.about).slice(0, 240),
     confidence: clamp(num(r.confidence, 0.6), 0, 1),
   };
 }
 function normMissing(m) {
   if (!m || !str(m.name)) return null;
   const cat = CAT_KEYS.includes(m.category) ? m.category : 'accessory';
-  return {name: str(m.name).slice(0, 60), category: cat, silhouette: SIL[m.silhouette] ? m.silhouette : DEFAULT_SIL[cat], hex: hexOk(m.hex) || NAMED[str(m.color).toLowerCase()] || '#8d8d90', why: str(m.why).slice(0, 160)};
+  return {name: str(m.name).slice(0, 60), category: cat, silhouette: SIL[m.silhouette] ? m.silhouette : DEFAULT_SIL[cat], hex: hexOk(m.hex) || NAMED[str(m.color).toLowerCase()] || '#8d8d90', why: str(m.why).slice(0, 160), need: m.need === 'essential' ? 'essential' : 'extra'};
 }
 const silList = () => Object.entries(SIL_GROUPS).map(([k, v]) => k + ': ' + v.join(', ')).join('\n');
 const catLines = list => list.map(it => [it.id, it.name, it.category + '/' + (it.silhouette || ''), arr(it.colors).map(c => c.name).join('+'), it.pattern && it.pattern !== 'solid' ? it.pattern : '', it.material || '', it.brand || '', str(it.details).slice(0, 70)].join(' | ')).join('\n');
-const styleLines = list => list.map(it => { const n = wornN(it.id); return [it.id, it.name, it.category + '/' + (it.silhouette || ''), arr(it.colors).map(c => c.name).join('+'), it.pattern && it.pattern !== 'solid' ? it.pattern : '', 'formality ' + (it.formality || 2), 'heat ' + (it.heat || 2), arr(it.vibes).join(','), arr(it.seasons).join('/'), n ? 'worn ' + n + 'x' : ''].filter(Boolean).join(' | '); }).join('\n');
+const styleLines = list => list.map(it => { const n = wornN(it.id); return [it.id, it.name, it.category + '/' + (it.silhouette || ''), arr(it.colors).map(c => c.name).join('+'), it.pattern && it.pattern !== 'solid' ? it.pattern : '', 'formality ' + (it.formality || 2), 'heat ' + (it.heat || 2), arr(it.vibes).join(','), arr(it.seasons).join('/'), it.use ? 'made for ' + it.use + (it.wearOut ? ' (wear out: ' + it.wearOut + ')' : '') : '', n ? 'worn ' + n + 'x' : ''].filter(Boolean).join(' | '); }).join('\n');
 function aboutMe() {
   const p = S.profile, bits = [];
   if (p.notes) bits.push('Notes from them: ' + str(p.notes).slice(0, 600));
@@ -687,7 +730,7 @@ ${catLines(pool) || '(none yet)'}
 If an item in the photo looks like the SAME physical piece as one listed above (a re-photograph: same type, colour, pattern and details, not merely similar), set duplicateOf to that id and duplicateConfidence from 0 to 1. Otherwise duplicateOf is null.
 
 Reply with only JSON in this shape:
-{"items":[{"bbox":[120,80,610,930],"name":"Black satin slip dress","category":"dress","silhouette":"slip-dress","colors":[{"name":"black","hex":"#141414"}],"pattern":"solid","material":"satin","formality":3,"heat":4,"vibes":["Date night","Going out","Evening"],"seasons":["spring","summer","autumn"],"brand":"","details":"bias cut, cowl neck, thin straps","confidence":0.9,"duplicateOf":null,"duplicateConfidence":0,"question":"","options":[]}],"note":""}
+{"items":[{"bbox":[120,80,610,930],"name":"Black satin slip dress","category":"dress","silhouette":"slip-dress","colors":[{"name":"black","hex":"#141414"}],"pattern":"solid","material":"satin","formality":3,"heat":4,"vibes":["Date night","Going out","Evening"],"seasons":["spring","summer","autumn"],"brand":"","details":"bias cut, cowl neck, thin straps","use":"occasion","wearOut":"yes","about":"A bias-cut satin slip dress: an evening piece that also works layered over a tee by day.","confidence":0.9,"duplicateOf":null,"duplicateConfidence":0,"question":"","options":[]}],"note":""}
 
 Rules:
 - bbox: [x0,y0,x1,y1] integers 0-1000 relative to the photo (0,0 is top-left), a snug box around that one item.
@@ -702,6 +745,9 @@ ${silList()}
 - vibes: 2 to 4 from: ${VIBES.join(', ')}.
 - brand: only if a label or logo is legible, else "".
 - details: up to 12 words on features that would let you recognise this exact piece again (cut, neckline, hardware, wash, print).
+- use: what the piece is made for, one of: ${USE_GUIDE}. Look closely at fabric, cut, trims and waistbands to tell sleepwear and underwear from daywear.
+- wearOut: can it be worn outside the home? yes, styled (only if styled deliberately, e.g. a satin pyjama shirt with jeans), or no.
+- about: one plain sentence telling the owner what the piece is and what it is for. They may not know, e.g. whether something is nightwear or a top.
 - confidence 0-1: how sure you are of the name and category.
 - question: when confidence is below 0.7 or something important is ambiguous, ONE short question for the owner, else "". options: 2-4 short answers to it, else [].
 - If nothing wearable is visible, return {"items":[],"note":"why"}.`;
@@ -750,6 +796,7 @@ async function processPhoto(p) {
     if (im && im.close) im.close();
     await w('photos/' + p.id, 'update', {status: ids.length ? 'done' : 'empty', itemIds: ids, note: str(res && res.note).slice(0, 200), doneAt: Date.now()});
     setLocal(p.id, {state: ids.length ? 'done' : 'empty', n: ids.length});
+    blobCache.delete(p.id);
   } catch (e) {
     const code = (e && e.code) || 'upstream_error';
     if (code === 'cancelled') { setLocal(p.id, {state: 'waiting'}); return; }
@@ -762,6 +809,7 @@ async function processPhoto(p) {
   }
 }
 function resumeQueue() { S.paused = null; S.armed = true; emit(); pump(); }
+async function retryAll(list) { S.armed = true; S.paused = null; for (const p of list) { await w('photos/' + p.id, 'update', {status: 'queued', error: ''}); setLocal(p.id, {state: 'waiting', err: ''}); } pump(); }
 async function retryPhoto(p) { S.armed = true; S.paused = null; await w('photos/' + p.id, 'update', {status: 'queued', error: ''}); setLocal(p.id, {state: 'waiting', err: ''}); pump(); }
 async function removePhoto(p) {
   const used = S.items.some(i => i.sourceId === p.sourceId || i.imageId === p.sourceId);
@@ -794,12 +842,13 @@ async function answerReview(it, answer) {
   if (!aiReady()) { return confirmReview(it, {notes: [it.notes, 'Q: ' + it.question + ' A: ' + answer].filter(Boolean).join('\n')}); }
   setLocal('rv_' + it.id, {busy: true});
   try {
-    const fields = {name: it.name, category: it.category, silhouette: it.silhouette, colors: it.colors, pattern: it.pattern, material: it.material, formality: it.formality, heat: it.heat, vibes: it.vibes, seasons: it.seasons, brand: it.brand, details: it.details};
+    const fields = {name: it.name, category: it.category, silhouette: it.silhouette, colors: it.colors, pattern: it.pattern, material: it.material, formality: it.formality, heat: it.heat, vibes: it.vibes, seasons: it.seasons, brand: it.brand, details: it.details, use: it.use || '', wearOut: it.wearOut || '', about: it.about || ''};
     const res = await S.sample.json(`You catalogued a clothing item from a photo and asked its owner a question. Correct the item using their answer.
 Item: ${JSON.stringify(fields)}
 Question: ${it.question}
 Owner's answer: ${answer}
-Reply with only the corrected item as JSON with exactly these keys: name, category, silhouette, colors, pattern, material, formality, heat, vibes, seasons, brand, details, confidence.
+Reply with only the corrected item as JSON with exactly these keys: name, category, silhouette, colors, pattern, material, formality, heat, vibes, seasons, brand, details, use, wearOut, about, confidence.
+use is one of: ${USE_GUIDE}. wearOut is yes, styled or no. about is one plain sentence on what the piece is and what it is for.
 Allowed categories: ${CAT_KEYS.join(', ')}. Silhouettes:
 ${silList()}
 Vibes: ${VIBES.join(', ')}. Patterns: ${PATTERNS.join(', ')}.`, {modelTier: 'quick'});
@@ -834,6 +883,43 @@ async function addWish(m, source) {
   const ok = await w('wishlist/' + uid('wl'), 'set', {name: m.name, category: m.category, silhouette: m.silhouette, hex: m.hex, why: m.why || '', source, addedAt: Date.now(), got: false});
   if (ok) toast('Added to your wishlist.');
 }
+async function identifyItem(it) {
+  if (!aiReady()) return;
+  setLocal('id_' + it.id, {busy: true, err: '', suggest: null});
+  try {
+    let images = null;
+    if (it.imageId && S.imagesOK) { try { const r = await fetch(imgUrl(it.imageId)); if (r.ok) images = [await r.blob()]; } catch {} }
+    const pool = activeItems().filter(x => x.id !== it.id).slice(0, 300);
+    const now = {name: it.name, category: it.category, silhouette: it.silhouette, colours: arr(it.colors).map(c => c.name), pattern: it.pattern, material: it.material, details: it.details, brand: it.brand};
+    const res = await S.sample.json(`${images ? 'Look at this photo of a piece from someone’s wardrobe' : 'Here is a piece from someone’s wardrobe (there is no photo, only its catalogue entry)'} and explain to its owner what it is. They are not sure what kind of piece it is or what it is meant for, for example whether it is nightwear, underwear, loungewear, swimwear or something to wear out. Look closely at fabric, cut, trims, waistbands and closures.
+What their catalogue says now: ${JSON.stringify(now)}
+About them:
+${aboutMe()}
+Their other pieces, for pairing (id | name | type | colours | pattern | formality | heat | vibes | seasons | made for | wears):
+${styleLines(pool) || '(none yet)'}
+
+Reply with only JSON: {"name":"proper name, colour first","category":"one of ${CAT_KEYS.join('|')}","silhouette":"a key from the list below","use":"one of ${USE_KEYS.join('|')}","wearOut":"yes|styled|no","about":"2 short sentences: what this piece is and what it is traditionally for","howToWear":["2 or 3 short ways to wear it, naming their pieces where it helps"],"pairsWith":["ids of their pieces it goes with, up to 4"],"care":"one short care tip","confidence":0.8}
+use means: ${USE_GUIDE}. wearOut: yes, styled (only if styled deliberately), or no.
+Silhouettes:
+${silList()}`, images ? {images} : {});
+    const n = normItem({...it, ...(res || {})});
+    const ids = new Set(pool.map(x => x.id));
+    await saveItem(it.id, {
+      use: n.use || it.use || '', wearOut: n.wearOut || it.wearOut || '', about: str(res && res.about).slice(0, 360) || it.about || '',
+      ideas: arr(res && res.howToWear).map(x => str(x).slice(0, 180)).filter(Boolean).slice(0, 3),
+      pairsWith: arr(res && res.pairsWith).map(String).filter(id => ids.has(id)).slice(0, 4),
+      care: str(res && res.care).slice(0, 180), identifiedAt: Date.now(),
+    });
+    setLocal('id_' + it.id, {busy: false, suggest: {name: n.name, category: n.category, silhouette: n.silhouette, conf: n.confidence}});
+  } catch (e) { if (AI_OFF.has(e && e.code)) S.aiOff = e.code; setLocal('id_' + it.id, {busy: false, err: errCopy(e)}); }
+}
+async function addWishMany(list, source) {
+  const seen = new Set(); let n = 0;
+  for (const m of list) { const k = wishKey(m); if (seen.has(k) || inWishlist(m)) continue; seen.add(k); if (await w('wishlist/' + uid('wl'), 'set', {name: m.name, category: m.category, silhouette: m.silhouette, hex: m.hex, why: m.why || '', source, addedAt: Date.now(), got: false})) n++; }
+  toast(n ? 'Added ' + n + ' to your wishlist.' : 'Already on your wishlist.');
+}
+const lc1 = t => t ? t[0].toLowerCase() + t.slice(1) : t;
+const listNames = list => { const n = list.map(m => lc1(m.name)); return n.length < 2 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]; };
 function openItem(id) { S.sheet = {type: 'item', id}; emit(); }
 function openLook(look) { S.sheet = {type: 'look', look}; emit(); }
 function closeSheet() { S.sheet = null; emit(); }
@@ -852,13 +938,14 @@ Weather: ${weather && weather !== 'Any' ? weather : 'not specified'}
 ${anchor ? 'Every outfit must include: ' + anchor.id + ' (' + anchor.name + ')\n' : ''}About them:
 ${aboutMe()}
 ${loved ? 'Looks they loved before (taste signal):\n' + loved + '\n' : ''}${inspo ? 'Looks they saved as inspiration (taste signal):\n' + inspo + '\n' : ''}${recent.length ? 'Worn in the last week, so use sparingly: ' + [...new Set(recent)].join(', ') + '\n' : ''}
-Wardrobe (id | name | type | colours | pattern | formality 1-5 | heat 1-5 | vibes | seasons | wear count):
+Wardrobe (id | name | type | colours | pattern | formality 1-5 | heat 1-5 | vibes | seasons | made for | wear count):
 ${styleLines(pool)}
 
-Make 3 distinct outfits that hit the brief. Each must be complete for the occasion: a top and a bottom, or a dress or jumpsuit; shoes whenever they own suitable ones; add outerwear, a bag or accessories when they help. Respect the weather. Never put an id in itemIds that is not in the wardrobe list. For each outfit, also suggest 0 to 2 pieces they do NOT own that would make it pop.
+Make 3 distinct outfits that hit the brief. Each must be complete for the occasion: a top and a bottom, or a dress or jumpsuit; shoes whenever they own suitable ones; add outerwear, a bag or accessories when they help. Respect the weather. Sleepwear, loungewear and underwear only belong in outfits for leaving the house when marked wear out yes or styled, and then the tip says how to make it work. Never put an id in itemIds that is not in the wardrobe list.
+For each outfit, fill missing with: first, anything ESSENTIAL the outfit still lacks because they own nothing suitable (for example no shoes that work with it, or no coat for cold weather), with need "essential"; then 0 to 2 pieces they do NOT own that would make it pop, with need "extra". If they own everything the outfit needs, include no essential entries.
 
 Reply with only JSON:
-{"read":"one sentence on how well their wardrobe covers this brief","outfits":[{"name":"2-4 word look name","itemIds":["id1","id2"],"why":"1-2 sentences on why it works","tip":"one styling tip (tuck, roll, layer, hair, make-up)","missing":[{"name":"Gold hoop earrings","category":"accessory","silhouette":"earrings","hex":"#c9a23a","why":"short reason"}]}]}
+{"read":"one sentence on how well their wardrobe covers this brief","outfits":[{"name":"2-4 word look name","itemIds":["id1","id2"],"why":"1-2 sentences on why it works","tip":"one styling tip (tuck, roll, layer, hair, make-up)","missing":[{"name":"Gold hoop earrings","category":"accessory","silhouette":"earrings","hex":"#c9a23a","why":"short reason","need":"extra"}]}]}
 Allowed categories: ${CAT_KEYS.join(', ')}. Silhouettes for missing pieces:
 ${silList()}`;
 }
@@ -894,7 +981,7 @@ async function runGaps() {
 About them:
 ${aboutMe()}
 Saved looks: ${S.outfits.map(o => o.name).slice(0, 20).join(', ') || 'none yet'}
-Wardrobe (id | name | type | colours | pattern | formality | heat | vibes | seasons | wears):
+Wardrobe (id | name | type | colours | pattern | formality | heat | vibes | seasons | made for | wears):
 ${styleLines(pool)}
 
 Find the 6 most valuable missing pieces: things that would unlock the most new outfits with what they already own, or fill an obvious hole (no neutral shoes, nothing for formal events, no outer layer for cold weather). Do not suggest anything very similar to something they own.
@@ -917,7 +1004,7 @@ async function runShopCheck(file) {
     const res = await S.sample.json(`Someone is in a shop deciding whether to buy the item in this photo. Judge it against what they already own.
 About them:
 ${aboutMe()}
-Their wardrobe (id | name | type | colours | pattern | formality | heat | vibes | seasons | wears):
+Their wardrobe (id | name | type | colours | pattern | formality | heat | vibes | seasons | made for | wears):
 ${styleLines(pool) || '(empty so far)'}
 
 Reply with only JSON: {"name":"Colour + item","category":"one of ${CAT_KEYS.join('|')}","silhouette":"a key from the list below","hex":"#rrggbb","verdict":"buy|maybe|skip","headline":"at most 8 words","reason":"2 sentences","pairsWith":["ids of owned items it would style well with, up to 6"],"similarOwned":["ids of owned items that are very similar, if any"],"outfits":5}
@@ -945,7 +1032,7 @@ function inspoPrompt(note, pool, n) {
 ${note ? 'What they said about it: ' + note + '\n' : ''}About them:
 ${aboutMe()}
 
-Their wardrobe (id | name | type | colours | pattern | formality 1-5 | heat 1-5 | vibes | seasons | wear count):
+Their wardrobe (id | name | type | colours | pattern | formality 1-5 | heat 1-5 | vibes | seasons | made for | wear count):
 ${styleLines(pool) || '(empty so far)'}
 
 1. Break the look into its elements: every garment, shoe, bag and accessory that matters.
@@ -957,8 +1044,8 @@ ${styleLines(pool) || '(empty so far)'}
    - "Your spin": adapted to them (their notes, body, the season) while keeping what makes the look work; up to 1 purchase.
 
 Reply with only JSON:
-{"name":"2-4 word name for the look","summary":"2 sentences on what makes this look work","elements":[{"name":"Charcoal oversized blazer","category":"outerwear","silhouette":"blazer","hex":"#3a3b3f","match":"owned id or null","quality":"exact|close|stand-in|none","note":"short: how their piece compares, or what to look for"}],"moves":["short styling move"],"options":[{"name":"Closest match","itemIds":["owned ids"],"how":"1-2 sentences","tip":"one styling tip","missing":[{"name":"Colour + item","category":"...","silhouette":"...","hex":"#rrggbb","why":"short"}]}],"buys":[{"name":"Colour + item","category":"...","silhouette":"...","hex":"#rrggbb","why":"why it is the highest-impact buy for this look"}]}
-Rules: never put an id that is not in the wardrobe list in itemIds or match. "Wear it today" has an empty missing list. buys: up to 3, most impactful first. If the photos show no outfit, reply {"name":"","summary":"what you see instead","elements":[],"options":[]}.
+{"name":"2-4 word name for the look","summary":"2 sentences on what makes this look work","elements":[{"name":"Charcoal oversized blazer","category":"outerwear","silhouette":"blazer","hex":"#3a3b3f","match":"owned id or null","quality":"exact|close|stand-in|none","role":"core|finishing","note":"short: how their piece compares, or what to look for"}],"moves":["short styling move"],"options":[{"name":"Closest match","itemIds":["owned ids"],"how":"1-2 sentences","tip":"one styling tip","missing":[{"name":"Colour + item","category":"...","silhouette":"...","hex":"#rrggbb","why":"short","need":"essential|extra"}]}],"buys":[{"name":"Colour + item","category":"...","silhouette":"...","hex":"#rrggbb","why":"why it is the highest-impact buy for this look"}]}
+Rules: never put an id that is not in the wardrobe list in itemIds or match. role is core when the look is incomplete or unrecognisable without the element (main garments, shoes, a key outer layer) and finishing for smaller touches (jewellery, belts, most bags). In each option, missing lists everything that option still needs that they don't own: need essential when the outfit can't be worn without it (e.g. they have the clothes but no suitable trainers), extra for finishing touches. "Wear it today" has an empty missing list. buys: up to 3, most impactful first. If the photos show no outfit, reply {"name":"","summary":"what you see instead","elements":[],"options":[]}.
 Allowed categories: ${CAT_KEYS.join(', ')}. Silhouettes:
 ${silList()}`;
 }
@@ -984,7 +1071,8 @@ async function runInspo(note, again) {
       const match = ids.has(str(e.match)) ? str(e.match) : null;
       let q = ['exact', 'close', 'stand-in', 'none'].includes(e.quality) ? e.quality : (match ? 'close' : 'none');
       if (!match) q = 'none'; else if (q === 'none') q = 'stand-in';
-      return {...m, note: str(e.note).slice(0, 160), match, quality: q};
+      const role = e.role === 'finishing' || e.role === 'core' ? e.role : (['accessory', 'bag'].includes(m.category) ? 'finishing' : 'core');
+      return {...m, note: str(e.note).slice(0, 160), match, quality: q, role};
     }).filter(Boolean);
     const lookName = str(res && res.name).slice(0, 60);
     const options = arr(res && res.options).slice(0, 3).map(o => ({
@@ -1292,6 +1380,8 @@ const I = {
   search: () => ic(html`<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>`),
   close: () => ic(html`<path d="M6 6l12 12M18 6L6 18"/>`),
   heart: on => html`<svg viewBox="0 0 24 24" aria-hidden="true" fill=${on ? 'var(--bad)' : 'none'} stroke=${on ? 'var(--bad)' : 'currentColor'} stroke-width="1.8" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20z"/></svg>`,
+  check: () => ic(html`<circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.5 2.5 5-5.2"/>`),
+  alert: () => ic(html`<circle cx="12" cy="12" r="8.5"/><path d="M12 7.6v5.2M12 16.2v.2"/>`),
   head: () => html`<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="8.5" rx="3.6" ry="4.4"/><path d="M4.5 21c.8-4.2 3.8-6.5 7.5-6.5s6.7 2.3 7.5 6.5"/></svg>`,
 };
 
@@ -1337,20 +1427,22 @@ function Notices() {
 function Tile({it}) {
   const n = wornN(it.id);
   return html`<button type="button" class="tile" onClick=${() => openItem(it.id)}>
-    <div class="tile-pic"><${ItemImg} item=${it}/>${it.example ? html`<span class="flag">Example</span>` : it.status === 'review' ? html`<span class="flag rev">Check</span>` : null}<i class="hole" aria-hidden="true"></i></div>
+    <div class="tile-pic"><${ItemImg} item=${it}/>${it.example ? html`<span class="flag">Example</span>` : it.status === 'review' ? html`<span class="flag rev">Check</span>` : null}${HOME_USES.includes(it.use) ? html`<span class="flag use">${USE_LABEL[it.use]}</span>` : null}<i class="hole" aria-hidden="true"></i></div>
     <div class="tile-name">${it.name}</div>
     <div class="tagline"><span>${ONE[it.category] || 'Piece'}</span><span>·</span><span class="num">${it.status === 'discarded' ? 'let go' : n ? n + '× worn' : 'unworn'}</span><span class="dots">${arr(it.colors).slice(0, 3).map(c => html`<i style=${'background:' + colorOf(c)}></i>`)}</span></div>
   </button>`;
 }
 function Closet() {
-  const [q, setQ] = useState(''); const [cat, setCat] = useState('all'); const [view, setView] = useState('active'); const [sort, setSort] = useState('new');
+  const [q, setQ] = useState(''); const [cat, setCat] = useState('all'); const [view, setView] = useState('active'); const [sort, setSort] = useState('new'); const [use, setUse] = useState('all');
   const all = S.items, examples = all.filter(i => i.example);
   const stat = i => i.status || 'active';
   const counts = {active: all.filter(i => stat(i) === 'active').length, review: all.filter(i => stat(i) === 'review').length, discarded: all.filter(i => stat(i) === 'discarded').length};
   let list = all.filter(i => stat(i) === view);
   const catCount = k => list.filter(i => i.category === k).length;
   if (cat !== 'all') list = list.filter(i => i.category === cat);
-  if (q.trim()) { const t = q.toLowerCase(); list = list.filter(i => [i.name, i.brand, i.store, i.material, i.details, i.notes, arr(i.colors).map(c => c.name).join(' '), arr(i.vibes).join(' '), CAT_LABEL[i.category], i.silhouette].join(' ').toLowerCase().includes(t)); }
+  const useCount = k => list.filter(i => (i.use || '') === k).length;
+  if (use !== 'all') list = list.filter(i => (i.use || '') === use);
+  if (q.trim()) { const t = q.toLowerCase(); list = list.filter(i => [i.name, i.brand, i.store, i.material, i.details, i.notes, arr(i.colors).map(c => c.name).join(' '), arr(i.vibes).join(' '), CAT_LABEL[i.category], i.silhouette, USE_LABEL[i.use], i.about].join(' ').toLowerCase().includes(t)); }
   const by = {
     new: (a, b) => (b.addedAt || 0) - (a.addedAt || 0),
     worn: (a, b) => wornN(b.id) - wornN(a.id),
@@ -1367,10 +1459,11 @@ function Closet() {
     <div class="toolbar">
       <div class="search">${I.search()}<input id="closet-search" type="search" placeholder="Search colour, brand, vibe…" value=${q} onInput=${e => setQ(e.target.value)} aria-label="Search your closet"/></div>
       <div class="row">
-        <${Seg} label="Show" value=${view} onChange=${v => { setView(v); setCat('all'); }} options=${[['active', 'On the rail'], ['review', `To check${counts.review ? ' (' + counts.review + ')' : ''}`], ['discarded', 'Let go']]}/>
+        <${Seg} label="Show" value=${view} onChange=${v => { setView(v); setCat('all'); setUse('all'); }} options=${[['active', 'On the rail'], ['review', `To check${counts.review ? ' (' + counts.review + ')' : ''}`], ['discarded', 'Let go']]}/>
         ${view !== 'discarded' ? html`<label class="vh" for="closet-sort">Sort</label><select id="closet-sort" class="plain" value=${sort} onChange=${e => setSort(e.target.value)}><option value="new">Newest</option><option value="worn">Most worn</option><option value="unworn">Least worn</option><option value="colour">By colour</option><option value="name">A–Z</option></select>` : null}
       </div>
       <div class="chips scroll" role="group" aria-label="Category"><${Chip} on=${cat === 'all'} onClick=${() => setCat('all')}>All</${Chip}>${CATS.filter(([k]) => catCount(k) || cat === k).map(([k, l]) => html`<${Chip} on=${cat === k} count=${catCount(k)} onClick=${() => setCat(k)}>${l}</${Chip}>`)}</div>
+      ${USES.some(([k]) => useCount(k)) || use !== 'all' ? html`<div class="chips scroll" role="group" aria-label="Made for"><${Chip} on=${use === 'all'} onClick=${() => setUse('all')}>Any use</${Chip}>${USES.filter(([k]) => useCount(k) || use === k).map(([k, l]) => html`<${Chip} on=${use === k} count=${useCount(k)} onClick=${() => setUse(k)}>${l}</${Chip}>`)}</div>` : null}
     </div>
     ${loading ? html`<${Thinking} text="Fetching your rail…"/>` :
       list.length ? html`<div class="grid">${list.map(it => html`<${Tile} key=${it.id} it=${it}/>`)}</div>` :
@@ -1417,7 +1510,9 @@ function ReviewCard({it}) {
         <label class="vh" for=${'rv-cat-' + it.id}>Category</label>
         <select class="plain" id=${'rv-cat-' + it.id} value=${cat} onChange=${e => setCat(e.target.value)}>${CATS.map(([k, l]) => html`<option value=${k}>${l}</option>`)}</select>
         <span class="dots">${arr(it.colors).map(c => html`<i style=${'background:' + colorOf(c)}></i>`)}</span>
+        ${it.use ? html`<span class="pill">${USE_LABEL[it.use]}</span>` : null}
       </div>
+      ${it.about ? html`<p class="sub" style="font-size:14px">${it.about}</p>` : null}
       ${dup ? html`<div class="dupe"><div class="pic"><${ItemImg} item=${dup}/></div><p>Looks like your <b>${dup.name}</b>. Same piece?</p></div><div class="row"><button class="btn sm" onClick=${() => mergeInto(it, dup.id)}>Same piece</button><button class="btn sm ghost" onClick=${() => confirmReview(it, {...patch(), duplicateOf: null})}>No, it’s different</button></div>` : null}
       ${it.question ? html`<div class="ask"><q>${it.question}</q>${busy ? html`<${Thinking} text="Updating…"/>` : html`<div class="chips">${arr(it.options).map(o => html`<button class="chip" onClick=${() => answerReview({...it, ...patch()}, o)}>${o}</button>`)}</div><div class="row"><input class="fld" style="flex:1;min-width:0;border:1px solid var(--line);border-radius:99px;padding:7px 12px;background:var(--surface)" id=${'rv-other-' + it.id} placeholder="Or type your answer" value=${other} onInput=${e => setOther(e.target.value)} aria-label="Your answer"/><button class="btn sm soft" disabled=${!other.trim()} onClick=${() => answerReview({...it, ...patch()}, other.trim())}>Send</button></div>`}</div>` : null}
       <label class="fld" for=${'rv-store-' + it.id}><span>Where’s it from? (optional)</span><input id=${'rv-store-' + it.id} placeholder="Shop, brand, gift from…" value=${store} onInput=${e => setStore(e.target.value)}/></label>
@@ -1471,7 +1566,7 @@ function Add() {
     <${QueueStatus}/>
     <${PhotoStrip}/>
     ${reviews.length ? html`<div style="display:flex;flex-direction:column;gap:12px"><h2 class="sec">Needs you <small class="num">${reviews.length}</small></h2>${reviews.map(it => html`<${ReviewCard} key=${it.id} it=${it}/>`)}</div>` : null}
-    ${failed.length ? html`<div class="panel"><h2 class="sec">Couldn’t read <small class="num">${failed.length}</small></h2><div class="list">${failed.map(p => html`<div class="li" key=${p.id}><div class="mini"><img src=${imgUrl(p.sourceId)} alt=""/></div><div><b>Photo from ${fmtDate(p.addedAt)}</b><small>${p.error || 'Something went wrong.'}</small></div><div class="row"><button class="btn sm soft" disabled=${!ai} onClick=${() => retryPhoto(p)}>Retry</button><button class="btn sm ghost" onClick=${() => removePhoto(p)}>Remove</button></div></div>`)}</div></div>` : null}
+    ${failed.length ? html`<div class="panel"><div class="row" style="justify-content:space-between"><h2 class="sec">Couldn’t read <small class="num">${failed.length}</small></h2>${failed.length > 1 ? html`<button class="btn sm soft" disabled=${!ai} onClick=${() => retryAll(failed)}>Retry all</button>` : null}</div><div class="list">${failed.map(p => html`<div class="li" key=${p.id}><div class="mini"><img src=${imgUrl(p.sourceId)} alt=""/></div><div><b>Photo from ${fmtDate(p.addedAt)}</b><small>${p.error || 'Something went wrong.'}</small></div><div class="row"><button class="btn sm soft" disabled=${!ai} onClick=${() => retryPhoto(p)}>Retry</button><button class="btn sm ghost" onClick=${() => removePhoto(p)}>Remove</button></div></div>`)}</div></div>` : null}
     ${recent.length ? html`<div style="display:flex;flex-direction:column;gap:12px"><h2 class="sec">Just hung up</h2><div class="grid">${recent.map(it => html`<${Tile} key=${it.id} it=${it}/>`)}</div></div>` : null}
     <${ManualAdd}/>
   </section>`;
@@ -1489,9 +1584,11 @@ function OutfitCard({o, idx, saved, eyebrow}) {
       <div class="minis">${items.map(it => html`<button type="button" class="mini" title=${it.name} aria-label=${it.name} onClick=${() => openItem(it.id)}><${ItemImg} item=${it}/></button>`)}</div>
     </div>
     <div class="look-more">
+      <${Completeness} missing=${o.missing}/>
       <p>${o.why}</p>
       ${o.tip ? html`<p class="tip"><b>Styling</b>${o.tip}</p>` : null}
-      ${arr(o.missing).length ? html`<div class="missing"><div class="eyebrow">Would make it pop</div>${o.missing.map(m => html`<div class="miss"><span class="miss-pic"><${GarmentThumb} item=${m}/></span><span><b>${m.name}</b><small>${m.why}</small></span><button class="btn sm soft" disabled=${!canWrite() || inWishlist(m)} onClick=${() => addWish(m, 'stylist')}>${inWishlist(m) ? 'Listed' : '+ Wishlist'}</button></div>`)}</div>` : null}
+      ${arr(o.missing).some(m => m.need === 'essential') ? html`<div class="missing"><div class="eyebrow">Needed to complete it</div>${o.missing.filter(m => m.need === 'essential').map(m => html`<${MissRow} m=${m} source="stylist"/>`)}</div>` : null}
+      ${arr(o.missing).some(m => m.need !== 'essential') ? html`<div class="missing"><div class="eyebrow">Would make it pop</div>${o.missing.filter(m => m.need !== 'essential').map(m => html`<${MissRow} m=${m} source="stylist"/>`)}</div>` : null}
       <div class="row">
         ${saved ? null : html`<button class="btn sm" disabled=${!canWrite() || isSaved} onClick=${() => saveLook(o)}>${isSaved ? 'Saved' : 'Save look'}</button>`}
         <button class="btn sm ghost" disabled=${!canWrite()} onClick=${() => logWear(o.itemIds, o.name, o.savedId || o.id)}>Wore it today</button>
@@ -1520,6 +1617,34 @@ function ShopCheck() {
       </div></div>` : null}
   </div>`;
 }
+function MissRow({m, source, note}) {
+  return html`<div class="miss"><span class=${'miss-pic' + (m.need === 'essential' ? ' need' : '')}><${GarmentThumb} item=${m}/></span><span><b>${m.name}</b><small>${note || m.why}</small></span><button class="btn sm soft" disabled=${!canWrite() || inWishlist(m)} onClick=${() => addWish(m, source)}>${inWishlist(m) ? 'Listed' : '+ Wishlist'}</button></div>`;
+}
+function Completeness({missing}) {
+  const need = arr(missing).filter(m => m.need === 'essential');
+  return need.length
+    ? html`<div class="complete need">${I.alert()}<span><b>To complete this look you still need ${listNames(need)}.</b> You have the rest.</span></div>`
+    : html`<div class="complete ok">${I.check()}<span>You own everything this look needs.</span></div>`;
+}
+function WhatsMissing({r}) {
+  const els = arr(r.elements).map(e => ({...e, role: e.role || (['accessory', 'bag'].includes(e.category) ? 'finishing' : 'core'), own: e.match ? itemById(e.match) : null}));
+  const core = els.filter(e => e.role === 'core');
+  const coreMissing = core.filter(e => !e.own).map(e => ({...e, need: 'essential', why: e.note}));
+  const finMissing = els.filter(e => e.role !== 'core' && !e.own).map(e => ({...e, need: 'extra', why: e.note}));
+  const upgrades = els.filter(e => e.own && e.quality === 'stand-in');
+  const all = [...coreMissing, ...finMissing];
+  if (!els.length) return null;
+  return html`<div class="panel">
+    <h2 class="sec">What’s missing</h2>
+    ${coreMissing.length
+      ? html`<div class="complete need">${I.alert()}<span><b class="num">You have ${core.length - coreMissing.length} of ${core.length} key pieces.</b> To complete the look you need ${listNames(coreMissing)}.</span></div>`
+      : html`<div class="complete ok">${I.check()}<span><b>You own every key piece.</b>${finMissing.length ? ' Only the finishing touches are missing.' : ' Nothing to buy.'}</span></div>`}
+    ${coreMissing.length ? html`<div class="mgroup"><div class="eyebrow">Needed to complete it</div>${coreMissing.map(m => html`<${MissRow} m=${m} source="inspo"/>`)}</div>` : null}
+    ${finMissing.length ? html`<div class="mgroup"><div class="eyebrow">Finishing touches you don’t have</div>${finMissing.map(m => html`<${MissRow} m=${m} source="inspo"/>`)}</div>` : null}
+    ${upgrades.length ? html`<div class="mgroup"><div class="eyebrow">Standing in for now</div>${upgrades.map(e => html`<${MissRow} m=${{...e, need: 'extra'}} source="inspo" note=${'Your ' + lc1(e.own.name) + ' works for now. ' + (e.note || '')}/>`)}</div>` : null}
+    ${all.length > 1 && canWrite() ? html`<div class="row"><button class="btn sm soft" disabled=${all.every(m => inWishlist(m))} onClick=${() => addWishMany(all, 'inspo')}>Add all missing to wishlist</button></div>` : null}
+  </div>`;
+}
 const QLABEL = {exact: 'You own it', close: 'Close match', 'stand-in': 'Stand-in', none: 'Missing'};
 function InspoResult({r, previews}) {
   const [del, setDel] = useState(false);
@@ -1541,6 +1666,7 @@ function InspoResult({r, previews}) {
       ${arr(r.elements).length ? html`<h2 class="sec" style="font-size:19px">Piece by piece</h2><div class="list">${r.elements.map(e => { const own = e.match && itemById(e.match); return html`<div class="el"><span class="target"><${GarmentThumb} item=${e}/></span><div><b>${e.name}</b><span class=${'q ' + (own ? e.quality : 'none')}>${QLABEL[own ? e.quality : 'none']}</span><small>${own ? 'Yours: ' + own.name + (e.note ? '. ' + e.note : '') : e.note}</small></div>${own ? html`<button class="mini" title=${own.name} aria-label=${'Your ' + own.name} onClick=${() => openItem(own.id)}><${ItemImg} item=${own}/></button>` : html`<span class="none">Not owned</span>`}</div>`; })}</div>` : null}
       ${arr(r.moves).length ? html`<div class="eyebrow">Key moves</div><ul class="moves">${r.moves.map(m => html`<li>${m}</li>`)}</ul>` : null}
     </div>
+    <${WhatsMissing} r=${r}/>
     ${arr(r.options).length ? html`<h2 class="sec">Ways to get it</h2>${r.options.map((o, i) => html`<${OutfitCard} key=${o.key} o=${o} idx=${i} eyebrow=${'Option ' + (i + 1)}/>`)}` : null}
     ${arr(r.buys).length ? html`<div class="panel"><h2 class="sec">Biggest-impact buys</h2><div class="list">${r.buys.map(m => html`<div class="li"><span class="miss-pic" style="width:48px;height:56px"><${GarmentThumb} item=${m}/></span><div><b>${m.name}</b><small>${m.why}</small></div><button class="btn sm soft" disabled=${!canWrite() || inWishlist(m)} onClick=${() => addWish(m, 'inspo')}>${inWishlist(m) ? 'Listed' : '+ Wishlist'}</button></div>`)}</div></div>` : null}
     ${r.id && canWrite() ? html`<div class="row">
@@ -1714,6 +1840,21 @@ function Me() {
 }
 
 /* ================= sheets ================= */
+function WhatItIs({it}) {
+  const st = S.local['id_' + it.id] || {};
+  const ideas = arr(it.ideas), pairs = arr(it.pairsWith).map(itemById).filter(Boolean), sug = st.suggest;
+  const differs = sug && (sug.name !== it.name || sug.category !== it.category || sug.silhouette !== it.silhouette);
+  return html`<div class="what">
+    <div class="row" style="justify-content:space-between"><span class="eyebrow">What it is</span>${it.use ? html`<span class="row" style="gap:6px"><span class="pill">${USE_LABEL[it.use]}</span>${it.wearOut ? html`<span class="pill soft">${WEAROUT[it.wearOut]}</span>` : null}</span>` : null}</div>
+    ${it.about ? html`<p>${it.about}</p>` : html`<p class="sub">Not sure what this is or what it’s for? Claude can look at the photo and tell you, including whether it’s nightwear, underwear or fine to wear out.</p>`}
+    ${ideas.length ? html`<div class="eyebrow">Ways to wear it</div><ul class="moves">${ideas.map(x => html`<li>${x}</li>`)}</ul>` : null}
+    ${pairs.length ? html`<div class="minis">${pairs.map(p => html`<button type="button" class="mini" title=${p.name} aria-label=${p.name} onClick=${() => openItem(p.id)}><${ItemImg} item=${p}/></button>`)}</div>` : null}
+    ${it.care ? html`<p class="tip"><b>Care</b>${it.care}</p>` : null}
+    ${differs && canWrite() ? html`<div class="ask"><span>Claude would call it <b>${sug.name}</b> (${(ONE[sug.category] || '').toLowerCase()}, ${String(sug.silhouette).replace(/-/g, ' ')})${sug.conf < 0.5 ? ', though it isn’t certain' : ''}.</span><div class="row"><button class="btn sm" onClick=${async () => { await saveItem(it.id, {name: sug.name, category: sug.category, silhouette: sug.silhouette}); setLocal('id_' + it.id, {suggest: null}); toast('Renamed to ' + sug.name + '.'); }}>Use this name</button><button class="btn sm ghost" onClick=${() => setLocal('id_' + it.id, {suggest: null})}>Keep mine</button></div></div>` : null}
+    ${st.busy ? html`<${Thinking} text="Taking a closer look…"/>` : html`<div class="row"><button class="btn sm soft" disabled=${!aiReady() || !canWrite()} onClick=${() => identifyItem(it)}>${I.spark()} ${it.identifiedAt ? 'Ask again' : 'Identify this piece'}</button></div>`}
+    ${st.err ? html`<p style="color:var(--bad)">${st.err}</p>` : null}
+  </div>`;
+}
 function ItemSheet({id}) {
   const it = itemById(id);
   const [photoIdx, setPhotoIdx] = useState(0); const [discarding, setDiscarding] = useState(false); const [delConfirm, setDelConfirm] = useState(false);
@@ -1740,11 +1881,13 @@ function ItemSheet({id}) {
       ${it.status !== 'discarded' ? html`<button class="btn sm ghost" disabled=${!ed} onClick=${() => logWear([it.id], it.name)}>Wore it today</button>` : null}
       ${it.status === 'review' ? html`<button class="btn sm ghost" disabled=${!ed} onClick=${() => { confirmReview(it); toast('Added to your closet.'); }}>Confirm it’s right</button>` : null}
     </div>
+    <${WhatItIs} it=${it}/>
     <div class="care">
       <div class="fgrid">
         <label class="fld" for="it-cat"><span>Category</span><select id="it-cat" value=${it.category} disabled=${!ed} onChange=${e => sv({category: e.target.value, silhouette: SIL_GROUPS[e.target.value].includes(it.silhouette) ? it.silhouette : DEFAULT_SIL[e.target.value]})}>${CATS.map(([k, l]) => html`<option value=${k}>${l}</option>`)}</select></label>
         <label class="fld" for="it-sil"><span>Shape</span><select id="it-sil" value=${it.silhouette} disabled=${!ed} onChange=${e => sv({silhouette: e.target.value})}>${[...new Set([...(SIL_GROUPS[it.category] || []), it.silhouette].filter(Boolean))].map(s => html`<option value=${s}>${s.replace(/-/g, ' ')}</option>`)}</select></label>
         <label class="fld" for="it-pat"><span>Pattern</span><select id="it-pat" value=${it.pattern || 'solid'} disabled=${!ed} onChange=${e => sv({pattern: e.target.value})}>${PATTERNS.map(p => html`<option value=${p}>${p}</option>`)}</select></label>
+        <label class="fld" for="it-use"><span>Made for</span><select id="it-use" value=${it.use || ''} disabled=${!ed} onChange=${e => sv({use: e.target.value})}><option value="">Not set</option>${USES.map(([k, l]) => html`<option value=${k}>${l}</option>`)}</select></label>
         <label class="fld" for="it-col"><span>Main colour</span><input id="it-col" type="color" value=${colorOf(c0)} disabled=${!ed} style="padding:4px;height:42px" onChange=${e => sv({colors: [{name: (c0 && c0.name) || 'colour', hex: e.target.value}, ...arr(it.colors).slice(1)]})}/></label>
         <${TextField} id="it-mat" label="Material" value=${it.material} placeholder="cotton, satin…" onSave=${v => sv({material: v.trim().toLowerCase()})}/>
       </div>
