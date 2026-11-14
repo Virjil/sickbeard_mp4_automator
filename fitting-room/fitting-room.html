@@ -46,7 +46,7 @@ a{color:inherit}
 :focus-visible{outline:2px solid var(--saffron);outline-offset:2px;border-radius:6px}
 h1,h2,h3{text-wrap:balance;margin:0}
 p{margin:0}
-.shell{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:4px calc(104px + env(safe-area-inset-bottom,0px))}
+.shell{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:4px calc(40px + env(safe-area-inset-bottom,0px))}
 
 /* header */
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
@@ -61,11 +61,12 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;backgroun
 @keyframes pulse{50%{opacity:.25}}
 
 /* tab bar */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:6px calc(6px + env(safe-area-inset-bottom,0px))}
+nav.tabs{background:var(--bg);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));padding-block:0 2px}
 .tabs-in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
-.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 4px;font-size:11.5px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:12px;position:relative}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0 8px;font-size:11.5px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:12px;position:relative}
 .tab svg{width:24px;height:24px}
 .tab[aria-current="page"]{color:var(--plum)}
+.tab[aria-current="page"]::after{content:"";position:absolute;left:24%;right:24%;bottom:0;height:3px;border-radius:3px;background:var(--plum)}
 .tab[aria-current="page"] svg{stroke-width:2}
 .badge{position:absolute;top:1px;left:calc(50% + 5px);min-width:18px;height:18px;border-radius:9px;background:var(--saffron);color:var(--saffron-ink);font:600 10.5px/18px var(--f-mono);padding:0 5px;text-align:center}
 .badge.pulse{animation:pulse 1.2s ease-in-out infinite}
@@ -236,6 +237,25 @@ details.manual[open] summary{margin-bottom:12px}
 .pair .two{display:flex;gap:6px}
 .pair .two .mini{width:auto;flex:1;height:72px}
 
+/* detail page, shortcuts, photo tools, lessons */
+.detail{display:flex;flex-direction:column;gap:16px;padding-top:14px;scroll-margin-top:128px}
+.detail-bar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.back{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 16px 8px 10px;font-weight:600;min-height:42px}
+.back svg{width:18px;height:18px}
+.anchor-t{scroll-margin-top:128px}
+.jump{margin-top:-4px}
+.btn.file{position:relative;overflow:hidden}
+.btn.file input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.studio{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px}
+.studio .pic{aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:var(--tile);max-width:100%}
+.studio img{width:100%;height:100%;object-fit:contain;display:block}
+.steps{margin:0;padding:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:14px}
+.steps li{counter-increment:st;display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start}
+.steps li::before{content:counter(st);width:30px;height:30px;border-radius:50%;background:var(--plum);color:var(--on-plum);display:grid;place-items:center;font:600 13px var(--f-mono)}
+.steps li > div{min-width:0;display:flex;flex-direction:column;gap:3px}
+.steps small{color:var(--muted);font-size:13px}
+.linkish{background:none;border:0;padding:0;color:var(--plum);font-weight:600;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+
 /* identity + completeness */
 .flag.use{top:auto;bottom:7px;background:var(--plum);color:var(--on-plum)}
 .what{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
@@ -332,7 +352,7 @@ svg .ghost{stroke:var(--saffron);stroke-dasharray:3 2.4}
 
 /* me */
 .me-grid{display:grid;grid-template-columns:minmax(150px,40%) 1fr;gap:18px;align-items:start}
-.me-grid .doll-box{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
+.me-grid .doll-box{position:sticky;top:calc(env(safe-area-inset-top,0px) + 126px)}
 .me-ctl{display:flex;flex-direction:column;gap:16px;min-width:0}
 fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;min-width:0}
 legend{font:500 10.5px var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:0;margin-bottom:8px}
@@ -366,7 +386,7 @@ legend{font:500 10.5px var(--f-mono);letter-spacing:.09em;text-transform:upperca
 .thumbs img{width:100%;height:100%;object-fit:cover}
 .confirm{display:flex;flex-direction:column;gap:10px;border:1px solid var(--bad);border-radius:12px;padding:12px}
 
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--bg);border-radius:12px;padding:11px 16px;font-size:14px;box-shadow:var(--shadow);max-width:min(92vw,460px);display:flex;gap:12px;align-items:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--bg);border-radius:12px;padding:11px 16px;font-size:14px;box-shadow:var(--shadow);max-width:min(92vw,460px);display:flex;gap:12px;align-items:center}
 .toast button{background:none;border:0;color:var(--saffron);font-weight:600;padding:0}
 
 #boot{min-height:70vh;display:grid;place-items:center;text-align:center;padding:24px}
@@ -490,7 +510,9 @@ const FRAMES = {
 const SKINS = ['mannequin','#F3D9C9','#E8BE9F','#D29A73','#B07650','#875437','#5C3825','#3D2519'];
 const HAIRS = [['none','None'],['short','Short'],['bob','Bob'],['shoulder','Shoulder'],['long','Long'],['bun','Bun'],['curly','Curls']];
 const HAIR_COLORS = ['#141010','#3B2417','#6A4128','#A0703F','#D8B46E','#B5492B','#9A9A9F','#E9E4DA'];
-const DEFAULT_PROFILE = {skin:'mannequin',hair:'none',hairColor:'#3B2417',frame:'straight',notes:'',sizeTop:'',sizeBottom:'',sizeShoe:''};
+const DEFAULT_PROFILE = {skin:'mannequin',hair:'none',hairColor:'#3B2417',frame:'straight',notes:'',sizeTop:'',sizeBottom:'',sizeShoe:'',makeupLevel:'',makeupKit:'',facialHair:''};
+const MOODS = ['Slinky','Snug & sexy','Full camp','Fierce','Flirty','Soft','Main character','Powerful','Mysterious','Playful','Low-key','Cosy'];
+const MAKEUP_LEVEL = {new: 'brand new to make-up and learning', some: 'knows the basics', pro: 'confident with make-up'};
 const ROUTES = ['closet','add','style','looks','insights','me'];
 
 /* ================= small utils ================= */
@@ -531,7 +553,7 @@ const S = {
   styleResult: loadLS('fr.style', null), styleBusy:false, styleErr:null, styleCtl:null,
   shop:null, gaps:null,
   trips:[], brief:'', weather:'Any',
-  inspiration:[], ins:null, inspoDraft:[], maxImages:1, styleMode: loadLS('fr.mode', 'vibe') === 'photo' ? 'photo' : 'vibe',
+  inspiration:[], ins:null, inspoDraft:[], maxImages:1, styleMode: ['photo', 'shop'].includes(loadLS('fr.mode', 'vibe')) ? loadLS('fr.mode', 'vibe') : 'vibe', moods: arr(loadLS('fr.moods', [])).filter(m => MOODS.includes(m)), sheetFrom: null,
 };
 if (S.styleResult) { S.brief = S.styleResult.brief || ''; S.weather = S.styleResult.weather || 'Any'; }
 const listeners = new Set();
@@ -539,7 +561,8 @@ let emitQueued = false;
 function emit() { if (emitQueued) return; emitQueued = true; queueMicrotask(() => { emitQueued = false; listeners.forEach(f => f()); }); }
 function useStore() { const [, force] = useState(0); useEffect(() => { const f = () => force(x => x + 1); listeners.add(f); return () => listeners.delete(f); }, []); return S; }
 function getRoute() { const h = location.hash.slice(1); return ROUTES.includes(h) ? h : 'closet'; }
-addEventListener('hashchange', () => { S.route = getRoute(); S.sheet = null; try { scrollTo(0, 0); } catch {} emit(); });
+function toTop() { requestAnimationFrame(() => requestAnimationFrame(() => { const t = document.getElementById('top'); if (t) t.scrollIntoView({block: 'start'}); else { try { scrollTo(0, 0); } catch {} } })); }
+addEventListener('hashchange', () => { S.route = getRoute(); S.sheet = null; S.sheetFrom = null; emit(); toTop(); });
 const go = r => { if (location.hash.slice(1) !== r) location.hash = r; else { S.route = r; emit(); } };
 let toastTimer = null;
 function toast(msg, undo) { S.toast = {msg, undo}; emit(); clearTimeout(toastTimer); toastTimer = setTimeout(() => { S.toast = null; emit(); }, undo ? 6000 : 3400); }
@@ -736,6 +759,8 @@ function aboutMe() {
   if (p.notes) bits.push('Notes from them: ' + str(p.notes).slice(0, 600));
   const sz = [p.sizeTop && 'tops ' + p.sizeTop, p.sizeBottom && 'bottoms ' + p.sizeBottom, p.sizeShoe && 'shoes ' + p.sizeShoe].filter(Boolean).join(', ');
   if (sz) bits.push('Sizes: ' + sz);
+  const mk = [MAKEUP_LEVEL[p.makeupLevel], p.makeupKit && 'their make-up bag: ' + str(p.makeupKit).slice(0, 400), p.facialHair && 'facial hair: ' + p.facialHair].filter(Boolean);
+  if (mk.length) bits.push('Make-up: ' + mk.join('; '));
   if (p.frame && FRAMES[p.frame]) bits.push('Body shape they chose for their figure: ' + FRAMES[p.frame].label.toLowerCase());
   return bits.join('\n') || 'Nothing shared yet.';
 }
@@ -939,9 +964,14 @@ async function addWishMany(list, source) {
 }
 const lc1 = t => t ? t[0].toLowerCase() + t.slice(1) : t;
 const listNames = list => { const n = list.map(m => lc1(m.name)); return n.length < 2 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]; };
-function openItem(id) { S.sheet = {type: 'item', id}; emit(); }
-function openLook(look) { S.sheet = {type: 'look', look}; emit(); }
-function closeSheet() { S.sheet = null; emit(); }
+function toDetail() { requestAnimationFrame(() => requestAnimationFrame(() => { const el = document.getElementById('detail'); if (el) { el.scrollIntoView({block: 'start'}); const b = el.querySelector('.back'); if (b) try { b.focus({preventScroll: true}); } catch {} } })); }
+function openSheet(sh) { if (!S.sheet) S.sheetFrom = document.activeElement; S.sheet = sh; emit(); toDetail(); }
+function openItem(id) { openSheet({type: 'item', id}); }
+function openLook(look) { openSheet({type: 'look', look}); }
+function closeSheet() {
+  const from = S.sheetFrom; S.sheet = null; S.sheetFrom = null; emit();
+  requestAnimationFrame(() => requestAnimationFrame(() => { if (from && from.isConnected && from !== document.body) { from.scrollIntoView({block: 'center'}); try { from.focus({preventScroll: true}); } catch {} } else toTop(); }));
+}
 function styleAround(id) { S.anchorId = id; S.sheet = null; go('style'); emit(); }
 
 /* ================= stylist, gaps, shop check ================= */
@@ -953,7 +983,7 @@ function stylePrompt(brief, weather, anchorId, pool) {
   return `You are a sharp, warm personal stylist. Build outfits ONLY from the wardrobe below, citing item ids exactly.
 
 Today is ${new Date().toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'})}.
-What they told you: ${brief}
+What they told you: ${brief}${S.moods.length ? '\nMoods they want: ' + S.moods.join(', ') : ''}
 Weather: ${weather && weather !== 'Any' ? weather : 'not specified (work it out from the place and time of year if they mention one)'}
 ${anchor ? 'Every outfit must include: ' + anchor.id + ' (' + anchor.name + ')\n' : ''}About them:
 ${aboutMe()}
@@ -963,14 +993,17 @@ ${styleLines(pool)}
 
 First decide what they need. If they are going away for one or more nights (a holiday, trip, weekend away, festival, work trip), plan the trip and reply in the TRIP shape. Otherwise reply in the LOOKS shape with 3 distinct outfits.
 
+Dress the mood as much as the occasion. Read how they want to feel and give every look a mood of 1 to 3 words. Dress them the way they describe themselves, including bold, camp, queer or gender-fluid styling when they ask for it, without toning it down. If they name moods for particular moments (for example slinky arriving at the airport, snug and sexy flying home), build a separate look for each of those moments.
+Every look also gets beauty: one short make-up or grooming idea that suits the look and its mood, achievable at their make-up level and using their make-up bag where it can (leave it empty for the gym).
+
 Every outfit must be complete for the occasion: a top and a bottom, or a dress or jumpsuit; shoes whenever they own suitable ones; add outerwear, a bag or accessories when they help. Respect the weather. Sleepwear, loungewear and underwear only belong in outfits for leaving the house when marked wear out yes or styled, and then the tip says how to make it work. Never put an id in itemIds that is not in the wardrobe list.
 For each outfit (or trip look), fill missing with: first, anything ESSENTIAL the outfit still lacks because they own nothing suitable (for example no shoes that work with it, or no coat for cold weather), with need "essential"; then 0 to 2 pieces they do NOT own that would make it pop, with need "extra". If they own everything the outfit needs, include no essential entries.
 
 LOOKS shape (reply with only this JSON):
-{"kind":"looks","read":"one sentence on how well their wardrobe covers this brief","outfits":[{"name":"2-4 word look name","itemIds":["id1","id2"],"why":"1-2 sentences on why it works","tip":"one styling tip (tuck, roll, layer, hair, make-up)","missing":[{"name":"Gold hoop earrings","category":"accessory","silhouette":"earrings","hex":"#c9a23a","why":"short reason","need":"extra"}]}]}
+{"kind":"looks","read":"one sentence on how well their wardrobe covers this brief","outfits":[{"name":"2-4 word look name","mood":"1-3 words","beauty":"short make-up idea","itemIds":["id1","id2"],"why":"1-2 sentences on why it works","tip":"one styling tip (tuck, roll, layer, hair, make-up)","missing":[{"name":"Gold hoop earrings","category":"accessory","silhouette":"earrings","hex":"#c9a23a","why":"short reason","need":"extra"}]}]}
 
 TRIP shape (reply with only this JSON):
-{"kind":"trip","read":"one or two sentences on the plan and how well their wardrobe covers it","trip":{"where":"the destination they named","days":7,"weather":"what to expect there at that time of year: daytime and evening temperatures, sun or rain"},"looks":[{"name":"2-4 word look name","slot":"day|night|beach|travel","itemIds":["id1","id2"],"why":"1 sentence","tip":"one styling tip","missing":[]}],"plan":[{"day":1,"label":"Fly out, pool, first night out","looks":[0,4]}],"pack":["id of every owned piece to pack"],"buy":[{"name":"Colour + item","category":"...","silhouette":"...","hex":"#rrggbb","why":"short reason","need":"essential|extra"}],"tips":["short packing or styling tip"]}
+{"kind":"trip","read":"one or two sentences on the plan and how well their wardrobe covers it","trip":{"where":"the destination they named","days":7,"weather":"what to expect there at that time of year: daytime and evening temperatures, sun or rain"},"looks":[{"name":"2-4 word look name","mood":"1-3 words","beauty":"short make-up idea","slot":"day|night|beach|travel","itemIds":["id1","id2"],"why":"1 sentence","tip":"one styling tip","missing":[]}],"plan":[{"day":1,"label":"Fly out, pool, first night out","looks":[0,4]}],"pack":["id of every owned piece to pack"],"buy":[{"name":"Colour + item","category":"...","silhouette":"...","hex":"#rrggbb","why":"short reason","need":"essential|extra"}],"tips":["short packing or styling tip"]}
 Trip rules: 4 to 8 looks built from one packable capsule that mixes and matches, covering the days, nights and activities the trip implies (beach and pool, dinners, nights out, travel day); reuse pieces across looks. plan has one entry per day, each listing the 0-based indexes of the looks for that day. pack lists every owned piece used in the looks. buy lists what to get before going: need essential when the trip can't be done properly without it (for example no swimwear for a beach holiday, no sandals for the heat), extra for things that would make it; up to 5. tips: up to 4.
 
 Allowed categories: ${CAT_KEYS.join(', ')}. Silhouettes for missing pieces:
@@ -988,6 +1021,7 @@ async function runStylist(brief, weather) {
       key: uid('o'), name: str(o && o.name).slice(0, 60) || 'Look',
       itemIds: [...new Set(arr(o && o.itemIds).map(String).filter(id => ids.has(id)))],
       why: str(o && o.why).slice(0, 420), tip: str(o && o.tip).slice(0, 260),
+      mood: str(o && o.mood).slice(0, 30), beauty: str(o && o.beauty).slice(0, 240),
       missing: arr(o && o.missing).slice(0, 4).map(normMissing).filter(Boolean), brief,
     });
     if (res && res.kind === 'trip' && Array.isArray(res.looks)) {
@@ -1027,6 +1061,105 @@ function askStylist(text) {
 }
 function openTrip(t) { S.styleResult = {...clean(t), kind: 'trip'}; S.brief = t.brief || ''; S.weather = t.weather || 'Any'; S.styleMode = 'vibe'; saveLS('fr.mode', 'vibe'); saveLS('fr.style', S.styleResult); if (S.route === 'style') { try { scrollTo(0, 0); } catch {} emit(); } else go('style'); }
 async function deleteTrip(r) { if (r.id && !(await w('trips/' + r.id, 'delete'))) return; if (S.styleResult === r) { S.styleResult = null; saveLS('fr.style', null); } toast('Trip removed.'); emit(); }
+function toggleMood(m) { S.moods = S.moods.includes(m) ? S.moods.filter(x => x !== m) : [...S.moods, m].slice(-3); saveLS('fr.moods', S.moods); emit(); }
+const GUIDES = loadLS('fr.guides', {}) || {};
+function openGuide(o) { const key = o ? o.key || o.id || uid('g') : 'starter'; openSheet({type: 'guide', key, look: o || null}); if (!GUIDES[key]) runGuide(key, o); }
+async function runGuide(key, o) {
+  if (!aiReady()) { setLocal('gd_' + key, {err: 'Make-up lessons need this page open in Claude.'}); return; }
+  setLocal('gd_' + key, {busy: true, err: ''});
+  try {
+    const p = S.profile, si = SKINS.indexOf(p.skin);
+    const tone = si > 0 ? ['', 'fair', 'light', 'light-medium', 'medium', 'tan', 'deep', 'very deep'][si] : '';
+    const wearing = o ? arr(o.itemIds).map(itemById).filter(Boolean).map(i => i.name).join(', ') : '';
+    const res = await S.sample.json(`You are a patient, encouraging make-up artist giving a one-to-one lesson.
+Your student's level: ${MAKEUP_LEVEL[p.makeupLevel] || 'not stated, so assume a beginner'}. Skin tone: ${tone || 'not stated'}. Facial hair: ${p.facialHair || 'not stated'}.
+About them:
+${aboutMe()}
+Their make-up bag: ${p.makeupKit || 'not listed, so suggest a small beginner kit'}
+${o ? `The look: ${o.name}${o.mood ? ' (mood: ' + o.mood + ')' : ''}${wearing ? ', wearing ' + wearing : ''}. Make-up idea: ${o.beauty || 'your choice, to suit the look'}.` : 'This is their first lesson: teach an easy everyday base, then one simple way to dial it up for a night out.'}
+Write a routine they can follow in front of a mirror, in plain words, in the order that makes it easiest. Use products from their bag where possible. Tailor it to them: their skin tone, facial hair and anything in their notes, and explain how to work around facial hair if they have it.
+Reply with only JSON: {"title":"short name for the look","time":"about 15 minutes","steps":[{"title":"Prep the skin","how":"1-3 short sentences","product":"what to use","tip":"optional pro tip"}],"practice":"one sentence on what to practise first","avoid":"one common beginner mistake to avoid","shopping":["anything worth adding to their bag for this look"]}
+Use 5 to 9 steps.`, {cache: false});
+    const steps = arr(res && res.steps).map(x => ({title: str(x && x.title).slice(0, 60), how: str(x && x.how).slice(0, 360), product: str(x && x.product).slice(0, 120), tip: str(x && x.tip).slice(0, 200)})).filter(x => x.title || x.how).slice(0, 10);
+    if (!steps.length) throw {code: 'empty_completion'};
+    GUIDES[key] = {title: str(res.title).slice(0, 60) || 'Your make-up lesson', time: str(res.time).slice(0, 40), steps, practice: str(res.practice).slice(0, 240), avoid: str(res.avoid).slice(0, 240), shopping: arr(res.shopping).map(x => str(x).slice(0, 100)).filter(Boolean).slice(0, 5)};
+    const keys = Object.keys(GUIDES); if (keys.length > 30) delete GUIDES[keys[0]];
+    saveLS('fr.guides', GUIDES);
+    setLocal('gd_' + key, {busy: false});
+  } catch (e) { if (AI_OFF.has(e && e.code)) S.aiOff = e.code; setLocal('gd_' + key, {busy: false, err: errCopy(e)}); }
+}
+function levels(ctx, w, h) {
+  try {
+    const d = ctx.getImageData(0, 0, w, h), a = d.data, hist = new Uint32Array(256); let n = 0;
+    for (let i = 0; i < a.length; i += 16) { hist[(a[i] * 0.299 + a[i + 1] * 0.587 + a[i + 2] * 0.114) | 0]++; n++; }
+    const cut = n * 0.005; let lo = 0, hi = 255, c = 0;
+    for (; lo < 255; lo++) { c += hist[lo]; if (c > cut) break; }
+    c = 0; for (; hi > 0; hi--) { c += hist[hi]; if (c > cut) break; }
+    if (hi - lo < 40 || (lo < 4 && hi > 251)) return;
+    const k = 255 / (hi - lo);
+    for (let i = 0; i < a.length; i += 4) { a[i] = (a[i] - lo) * k; a[i + 1] = (a[i + 1] - lo) * k; a[i + 2] = (a[i + 2] - lo) * k; }
+    ctx.putImageData(d, 0, 0);
+  } catch {}
+}
+async function studioShot(it) {
+  if (!aiReady() || !S.imagesOK || !it.imageId) return;
+  const key = 'st_' + it.id, prev = S.local[key];
+  if (prev && prev.preview) { try { URL.revokeObjectURL(prev.preview); } catch {} }
+  setLocal(key, {busy: true, err: '', preview: '', blob: null});
+  try {
+    const r = await fetch(imgUrl(it.imageId)); if (!r.ok) throw {code: 'missing_photo'};
+    const src = await r.blob();
+    const res = await S.sample.json(`This photo shows a clothing item: ${it.name}. Trace the outline of that one item so it can be cut out of its background for a clean product photo. Follow the real edge closely: include straps, sleeves, collar, hardware and the whole hem; leave out hangers, hands, bodies and background. Where the item has a gap (between straps, between trouser legs), trace around the outside only.
+Reply with only JSON: {"ok":true,"outline":[[412,88],[455,92]]}
+outline: 40 to 90 points going clockwise around the item's outer edge, integers 0-1000 relative to the photo width and height (0,0 is the top-left). Put more points on curves and corners. If the item can't be separated cleanly from its background, reply {"ok":false,"outline":[]}.`, {images: [src]});
+    const raw = arr(res && res.outline).map(q => Array.isArray(q) ? [num(q[0], NaN), num(q[1], NaN)] : null).filter(q => q && Number.isFinite(q[0]) && Number.isFinite(q[1]));
+    if ((res && res.ok === false) || raw.length < 8) throw {code: 'no_cutout'};
+    const im = await decodeImage(src); const [W, H] = dimsOf(im);
+    const sc = Math.max(...raw.flat()) <= 1.001 ? 1 : 1000;
+    const P = raw.map(([x, y]) => [clamp(x / sc, 0, 1) * W, clamp(y / sc, 0, 1) * H]);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const [x, y] of P) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    const bw = x1 - x0, bh = y1 - y0;
+    if (bw * bh < W * H * 0.04) throw {code: 'no_cutout'};
+    const pad = Math.max(bw, bh) * 0.12, k = Math.min(1, 1000 / Math.max(bw + pad * 2, bh + pad * 2.4));
+    const cw = Math.round((bw + pad * 2) * k), ch = Math.round((bh + pad * 2.4) * k);
+    const lv = document.createElement('canvas'); lv.width = Math.max(1, Math.round(bw * k)); lv.height = Math.max(1, Math.round(bh * k));
+    const lx = lv.getContext('2d'); lx.drawImage(im, x0, y0, bw, bh, 0, 0, lv.width, lv.height); levels(lx, lv.width, lv.height);
+    const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch; const cx = cv.getContext('2d');
+    const bg = cx.createLinearGradient(0, 0, 0, ch); bg.addColorStop(0, '#f7f4f2'); bg.addColorStop(1, '#ebe5e2'); cx.fillStyle = bg; cx.fillRect(0, 0, cw, ch);
+    const ox = pad * k, oy = pad * k, T = P.map(([x, y]) => [(x - x0) * k + ox, (y - y0) * k + oy]), n = T.length;
+    const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const path = new Path2D(); let m = mid(T[n - 1], T[0]); path.moveTo(m[0], m[1]);
+    for (let i = 0; i < n; i++) { const nx = mid(T[i], T[(i + 1) % n]); path.quadraticCurveTo(T[i][0], T[i][1], nx[0], nx[1]); }
+    path.closePath();
+    cx.save(); cx.shadowColor = 'rgba(40,28,30,0.28)'; cx.shadowBlur = 26 * k + 6; cx.shadowOffsetY = 12 * k + 3; cx.fillStyle = '#efeae7'; cx.fill(path); cx.restore();
+    cx.save(); cx.clip(path); cx.drawImage(lv, ox, oy); cx.restore();
+    cx.save(); cx.globalAlpha = 0.35; cx.lineWidth = 1.2; cx.strokeStyle = '#f2eeeb'; cx.stroke(path); cx.restore();
+    if (im.close) im.close();
+    const blob = await new Promise(done => cv.toBlob(done, 'image/jpeg', 0.9)); if (!blob) throw {code: 'decode'};
+    setLocal(key, {busy: false, preview: URL.createObjectURL(blob), blob});
+  } catch (e) { if (AI_OFF.has(e && e.code)) S.aiOff = e.code; setLocal(key, {busy: false, err: e && e.code === 'no_cutout' ? 'Claude couldn’t separate this piece cleanly from its background. A photo on a plain surface works best.' : errCopy(e)}); }
+}
+async function keepStudio(it) {
+  const key = 'st_' + it.id, st = S.local[key]; if (!st || !st.blob || !S.assets) return;
+  setLocal(key, {busy: true});
+  try {
+    const up = await S.assets.upload(st.blob, {type: 'image/jpeg'});
+    await saveItem(it.id, {imageId: up.id, photos: [...new Set([it.imageId, ...arr(it.photos)].filter(Boolean))]});
+    try { URL.revokeObjectURL(st.preview); } catch {}
+    S.local[key] = {}; emit(); toast('Studio shot saved. Your original is kept under the picture.');
+  } catch { setLocal(key, {busy: false, err: 'The studio shot couldn’t be saved. Try again.'}); }
+}
+async function replacePhoto(it, file) {
+  if (!file || !S.assets) return;
+  const key = 'st_' + it.id; setLocal(key, {busy: true, err: ''});
+  try {
+    const {blob} = await prepPhoto(file); const up = await S.assets.upload(blob, {type: 'image/jpeg'});
+    await saveItem(it.id, {imageId: up.id, photos: [...new Set([it.imageId, ...arr(it.photos)].filter(Boolean))]});
+    setLocal(key, {busy: false}); toast('Photo replaced. The old one is kept under the picture.');
+  } catch { setLocal(key, {busy: false, err: 'That photo couldn’t be used. Try a JPEG or PNG.'}); }
+}
+function makeMain(it, aid) { if (!aid || aid === it.imageId) return; saveItem(it.id, {imageId: aid, photos: [...new Set([it.imageId, ...arr(it.photos)].filter(x => x && x !== aid))]}); }
 async function runGaps() {
   if (!aiReady()) return;
   const pool = activeItems();
@@ -1436,6 +1569,7 @@ const I = {
   search: () => ic(html`<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>`),
   close: () => ic(html`<path d="M6 6l12 12M18 6L6 18"/>`),
   heart: on => html`<svg viewBox="0 0 24 24" aria-hidden="true" fill=${on ? 'var(--bad)' : 'none'} stroke=${on ? 'var(--bad)' : 'currentColor'} stroke-width="1.8" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20z"/></svg>`,
+  back: () => ic(html`<path d="M14.5 5.5L8 12l6.5 6.5"/>`),
   check: () => ic(html`<circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.5 2.5 5-5.2"/>`),
   alert: () => ic(html`<circle cx="12" cy="12" r="8.5"/><path d="M12 7.6v5.2M12 16.2v.2"/>`),
   head: () => html`<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="8.5" rx="3.6" ry="4.4"/><path d="M4.5 21c.8-4.2 3.8-6.5 7.5-6.5s6.7 2.3 7.5 6.5"/></svg>`,
@@ -1650,12 +1784,14 @@ function OutfitCard({o, idx, saved, eyebrow}) {
     <div class="look-body">
       <div class="eyebrow">${eyebrow || 'Look ' + (idx + 1)}${o.missing && o.missing.length ? ' · dashed = not owned yet' : ''}</div>
       <h3 class="look-name">${o.name}</h3>
+      ${o.mood ? html`<span class="pill soft" style="align-self:flex-start">${o.mood}</span>` : null}
       <div class="minis">${items.map(it => html`<button type="button" class="mini" title=${it.name} aria-label=${it.name} onClick=${() => openItem(it.id)}><${ItemImg} item=${it}/></button>`)}</div>
     </div>
     <div class="look-more">
       <${Completeness} missing=${o.missing}/>
       <p>${o.why}</p>
       ${o.tip ? html`<p class="tip"><b>Styling</b>${o.tip}</p>` : null}
+      ${o.beauty ? html`<p class="tip"><b>Make-up</b>${o.beauty} <button type="button" class="linkish" onClick=${() => openGuide(o)}>Teach me</button></p>` : null}
       ${arr(o.missing).some(m => m.need === 'essential') ? html`<div class="missing"><div class="eyebrow">Needed to complete it</div>${o.missing.filter(m => m.need === 'essential').map(m => html`<${MissRow} m=${m} source="stylist"/>`)}</div>` : null}
       ${arr(o.missing).some(m => m.need !== 'essential') ? html`<div class="missing"><div class="eyebrow">Would make it pop</div>${o.missing.filter(m => m.need !== 'essential').map(m => html`<${MissRow} m=${m} source="stylist"/>`)}</div>` : null}
       <div class="row">
@@ -1685,6 +1821,39 @@ function ShopCheck() {
         <div class="row"><button class="btn sm" disabled=${!canAdd()} onClick=${boughtIt}>I bought it: add to closet</button><button class="btn sm ghost" disabled=${!canWrite() || inWishlist(r)} onClick=${() => addWish({...r, why: r.headline}, 'shop')}>${inWishlist(r) ? 'On wishlist' : 'Save to wishlist'}</button></div>
       </div></div>` : null}
   </div>`;
+}
+function JumpBar({items}) {
+  return html`<div class="chips scroll jump" role="navigation" aria-label="Jump to a section">${items.map(([id, l]) => html`<button type="button" class="chip" onClick=${() => { const el = document.getElementById(id); if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'}); else toast('Nothing there yet.'); }}>${l}</button>`)}</div>`;
+}
+function PhotoTools({it, idx, photos, setIdx}) {
+  const st = S.local['st_' + it.id] || {}, ed = canWrite() && !!S.assets;
+  const q = [it.brand, it.name].filter(Boolean).join(' ');
+  const discard = () => { try { URL.revokeObjectURL(st.preview); } catch {} S.local['st_' + it.id] = {}; emit(); };
+  return html`<div style="display:flex;flex-direction:column;gap:10px">
+    ${st.preview ? html`<div class="studio"><div class="pic"><img src=${st.preview} alt="Studio version of this piece"/></div><div style="display:flex;flex-direction:column;gap:8px;min-width:0"><b>Studio shot</b><p class="sub">Keep it if it looks better. Your original stays with the piece.</p><div class="row"><button class="btn sm" disabled=${st.busy} onClick=${() => keepStudio(it)}>Keep</button><button class="btn sm ghost" onClick=${discard}>Discard</button></div></div></div>` : null}
+    ${st.busy ? html`<${Thinking} text=${st.preview ? 'Saving…' : 'Working on the photo…'}/>` : null}
+    ${st.err ? html`<p style="color:var(--bad)">${st.err}</p>` : null}
+    ${ed ? html`<div class="row">
+      ${idx > 0 ? html`<button class="btn sm" onClick=${() => { makeMain(it, photos[idx]); setIdx(0); }}>Make this the main photo</button>` : null}
+      <button class="btn sm soft" disabled=${!aiReady() || !S.imagesOK || !it.imageId || st.busy} onClick=${() => studioShot(it)}>${I.spark()} Studio shot</button>
+      <label class="btn sm soft file">Replace photo<input type="file" accept="image/*" aria-label="Replace this piece’s photo" onChange=${e => { replacePhoto(it, e.target.files && e.target.files[0]); e.target.value = ''; }}/></label>
+      <a class="btn sm ghost" href=${'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q)} target="_blank" rel="noopener noreferrer">Find a shop photo</a>
+    </div>` : null}
+  </div>`;
+}
+function GuideDetail({k, look}) {
+  const g = GUIDES[k], st = S.local['gd_' + k] || {};
+  return html`
+    <div class="vhead"><span class="eyebrow">Make-up lesson${look ? ' · ' + look.name : ''}</span><h2 class="look-name" style="font-size:30px">${g ? g.title : 'Your make-up lesson'}</h2>${g && g.time ? html`<p class="sub">${g.time}</p>` : null}</div>
+    ${look && look.beauty ? html`<p class="tip"><b>The idea</b>${look.beauty}</p>` : null}
+    ${st.busy ? html`<${Thinking} text="Writing your lesson… usually 20–40 seconds."/>` : null}
+    ${st.err ? html`<p style="color:var(--bad)">${st.err}</p>` : null}
+    ${g ? html`<ol class="steps">${g.steps.map(x => html`<li><div><b>${x.title}</b><span>${x.how}</span>${x.product ? html`<small>Use: ${x.product}</small>` : null}${x.tip ? html`<small>Tip: ${x.tip}</small>` : null}</div></li>`)}</ol>
+      ${g.practice ? html`<p class="tip"><b>Practise first</b>${g.practice}</p>` : null}
+      ${g.avoid ? html`<p class="tip"><b>Avoid</b>${g.avoid}</p>` : null}
+      ${arr(g.shopping).length ? html`<div class="panel"><div class="eyebrow">Worth adding to your bag</div><ul class="moves">${g.shopping.map(x => html`<li>${x}</li>`)}</ul></div>` : null}
+      <div class="row"><button class="btn sm soft" disabled=${st.busy || !aiReady()} onClick=${() => runGuide(k, look)}>Write it again</button></div>` : null}
+    ${!S.profile.makeupKit ? html`<p class="sub">List what’s in your make-up bag under <a href="#me">Mock me</a> and lessons will use your own products.</p>` : null}`;
 }
 function MissRow({m, source, note}) {
   return html`<div class="miss"><span class=${'miss-pic' + (m.need === 'essential' ? ' need' : '')}><${GarmentThumb} item=${m}/></span><span><b>${m.name}</b><small>${note || m.why}</small></span><button class="btn sm soft" disabled=${!canWrite() || inWishlist(m)} onClick=${() => addWish(m, source)}>${inWishlist(m) ? 'Listed' : '+ Wishlist'}</button></div>`;
@@ -1744,7 +1913,7 @@ function TripResult({r}) {
     </div>
     ${arr(r.plan).length ? html`<div class="panel"><h2 class="sec">Day by day</h2><div class="list">${r.plan.map(d => html`<div class="day"><b class="num">Day ${d.day}</b><span>${d.label}</span>${arr(d.looks).length ? html`<span class="chips">${d.looks.map(n => r.outfits[n] ? html`<button type="button" class="chip" onClick=${() => jump(r.outfits[n].key)}>${r.outfits[n].name}</button>` : null)}</span>` : null}</div>`)}</div></div>` : null}
     <h2 class="sec">The looks <small class="num">${r.outfits.length}</small></h2>
-    ${r.outfits.map((o, i) => html`<div id=${'look-' + o.key} key=${o.key} style="scroll-margin-top:84px"><${OutfitCard} o=${o} idx=${i} eyebrow=${(SLOT[o.slot] || 'Look') + ' · ' + (i + 1)}/></div>`)}
+    ${r.outfits.map((o, i) => html`<div id=${'look-' + o.key} key=${o.key} style="scroll-margin-top:128px"><${OutfitCard} o=${o} idx=${i} eyebrow=${(SLOT[o.slot] || 'Look') + ' · ' + (i + 1)}/></div>`)}
     ${pack.length ? html`<div class="panel"><div class="row" style="justify-content:space-between"><h2 class="sec">Packing list</h2><span class="eyebrow num">${done} of ${pack.length} packed</span></div><div class="bar"><i style=${'width:' + Math.round(100 * done / pack.length) + '%'}></i></div><div class="list">${pack.map(it => html`<label class=${'li pack' + (packed.has(it.id) ? ' done' : '')} for=${'pk-' + it.id} key=${it.id}><span class="mini"><${ItemImg} item=${it}/></span><div><b>${it.name}</b><small>${ONE[it.category] || ''}</small></div><input type="checkbox" id=${'pk-' + it.id} checked=${packed.has(it.id)} onChange=${() => toggle(it.id)}/></label>`)}</div></div>` : null}
     ${arr(r.tips).length ? html`<div class="panel"><h2 class="sec">Packing tips</h2><ul class="moves">${r.tips.map(x => html`<li>${x}</li>`)}</ul></div>` : null}
     ${canWrite() ? html`<div class="row">${del ? html`<button class="btn sm warn" onClick=${() => deleteTrip(r)}>Remove trip</button><button class="btn sm ghost" onClick=${() => setDel(false)}>Keep</button>` : html`<button class="btn sm ghost" onClick=${() => setDel(true)}>Remove this trip</button>`}</div>` : null}
@@ -1810,11 +1979,13 @@ function Style() {
   const go2 = () => { const b = brief.trim(); if (b) runStylist(b, weather); };
   return html`<section class="view">
     <div class="vhead"><h1>Style <em>me</em></h1><p class="sub">Tell it what’s going on, from a boardroom meeting to a week away, or show it a photo of a look you love. The stylist works from what’s on your rail and tells you what’s missing.</p></div>
-    <${Seg} label="Style from" value=${S.styleMode} onChange=${setStyleMode} options=${[['vibe', 'Tell it what’s happening'], ['photo', 'Recreate a photo']]}/>
-    ${S.styleMode === 'photo' ? html`<${InspoPanel}/>` : html`<div class="brief">
+    <${Seg} label="Style from" value=${S.styleMode} onChange=${setStyleMode} options=${[['vibe', 'What’s happening'], ['photo', 'Recreate a photo'], ['shop', 'Shop check']]}/>
+    ${S.styleMode === 'shop' ? html`<${ShopCheck}/>` : S.styleMode === 'photo' ? html`<${InspoPanel}/>` : html`<div class="brief">
       <label class="ask-label" for="brief-in">What’s happening?</label>
       <textarea id="brief-in" rows="3" placeholder="Booked a week in Gran Canaria and want to look my hottest. Or: work drinks Friday, it’s freezing, want to look sharp…" value=${brief} onInput=${e => setBrief(e.target.value)} onKeyDown=${e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) go2(); }}></textarea>
       <div class="chips">${BRIEFS.map(([l, t]) => html`<${Chip} on=${brief === t} onClick=${() => setBrief(t)}>${l}</${Chip}>`)}</div>
+      <div class="eyebrow">Mood (pick up to 3)</div>
+      <div class="chips" role="group" aria-label="Mood">${MOODS.map(m => html`<${Chip} on=${S.moods.includes(m)} onClick=${() => toggleMood(m)}>${m}</${Chip}>`)}</div>
       <div class="row" style="justify-content:space-between"><${Seg} label="Weather" value=${weather} onChange=${setWeather} options=${WEATHER.map(x => [x, x === 'Any' ? 'Any weather' : x])}/></div>
       ${anchor ? html`<div class="anchor"><span class="mini"><${ItemImg} item=${anchor}/></span><span style="flex:1;min-width:0"><span class="eyebrow">Built around</span><br/><b>${anchor.name}</b></span><button class="x" aria-label="Stop building around this piece" onClick=${() => { S.anchorId = null; emit(); }}>${I.close()}</button></div>` : null}
       <div class="row">
@@ -1829,7 +2000,6 @@ function Style() {
       <div class="vhead"><span class="eyebrow">For “${res.brief}”${res.weather && res.weather !== 'Any' ? ' · ' + res.weather.toLowerCase() : ''}</span>${res.read ? html`<p>${res.read}</p>` : null}</div>
       <div class="looks-2" style="display:flex;flex-direction:column;gap:12px">${res.outfits.map((o, i) => html`<${OutfitCard} key=${o.key} o=${o} idx=${i}/>`)}</div>
     </div>` : null}`}
-    <${ShopCheck}/>
   </section>`;
 }
 
@@ -1846,21 +2016,23 @@ function Looks() {
   const diary = [...S.wears].sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.at || 0) - (a.at || 0)).slice(0, 12);
   return html`<section class="view">
     <div class="vhead"><h1>Look<em>book</em></h1><p class="sub">Saved outfits, looks you want to recreate, the pairings that keep working, and a diary of what you actually wore.</p></div>
+    <${JumpBar} items=${[['lk-saved', 'Saved looks'], ['lk-trips', 'Trips'], ['lk-inspo', 'Inspiration'], ['lk-pairs', 'Pairs'], ['lk-diary', 'Wear diary']]}/>
+    <div id="lk-saved" class="anchor-t"></div>
     ${looks.length ? html`<div class="lookbook">${looks.map(o => { const items = arr(o.itemIds).map(itemById).filter(Boolean); const n = wearsByLook.get(o.id) || 0; return html`<div class="lb" key=${o.id} style="position:relative"><button type="button" class="bare" style="gap:8px" onClick=${() => openLook({...o, savedId: o.id})}><div class="doll-box"><${Doll} items=${items} missing=${arr(o.missing)}/></div><h3>${o.name}</h3><span class="tagline num">${n ? 'Worn ' + n + '×' : 'Not worn yet'} · ${items.length} pieces</span></button><button class="heart" aria-pressed=${!!o.loved} aria-label=${o.loved ? 'Unlove look' : 'Love look'} disabled=${!canWrite()} onClick=${() => w('outfits/' + o.id, 'update', {loved: !o.loved})}>${I.heart(o.loved)}</button></div>`; })}</div>` :
       html`<${Empty} title="No saved looks yet" action=${html`<a class="btn" href="#style">Get styled</a>`}>Ask the stylist for a vibe and save the outfits you like. Hearting a look teaches the stylist your taste.</${Empty}>`}
-    <div class="panel"><h2 class="sec">Trips <small class="num">${S.trips.length}</small></h2>
+    <div class="panel anchor-t" id="lk-trips"><h2 class="sec">Trips <small class="num">${S.trips.length}</small></h2>
       ${S.trips.length ? html`<div class="list">${[...S.trips].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map(t => { const first = itemById(arr(arr(t.outfits)[0] && t.outfits[0].itemIds)[0]); const n = arr(t.pack).length, k = arr(t.packed).filter(id => arr(t.pack).includes(id)).length; return html`<div class="li" key=${t.id}><span class="mini">${first ? html`<${ItemImg} item=${first}/>` : null}</span><div><b>${[t.trip && t.trip.where, t.trip && t.trip.days ? t.trip.days + ' days' : ''].filter(Boolean).join(' · ') || 'Trip'}</b><small class="num">${fmtDate(t.createdAt)} · ${arr(t.outfits).length} looks · ${k} of ${n} packed</small></div><button class="btn sm soft" onClick=${() => openTrip(t)}>Open</button></div>`; })}</div>` :
         html`<p class="sub">Tell the stylist you’re going away, where and for how long. It plans day and night looks, a packing list you can tick off, and what to buy first. Trips are kept here.</p>`}
     </div>
-    <div class="panel"><h2 class="sec">Inspiration board <small class="num">${S.inspiration.length}</small></h2>
+    <div class="panel anchor-t" id="lk-inspo"><h2 class="sec">Inspiration board <small class="num">${S.inspiration.length}</small></h2>
       ${S.inspiration.length ? html`<div class="board">${[...S.inspiration].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map(x => { const el = arr(x.elements); return html`<button type="button" class="bare" key=${x.id} onClick=${() => openInspo(x)}><img src=${imgUrl(arr(x.imageIds)[0])} alt=""/><b>${x.name}</b><span class="tagline num">You own ${el.filter(e => e.match).length} of ${el.length}</span></button>`; })}</div>` :
         html`<p class="sub">Seen a look you want? Add the photo on the Style tab and get three ways to recreate it from your closet. Each one is kept here.</p><div class="row"><a class="btn sm soft" href="#style" onClick=${() => setStyleMode('photo')}>Recreate a photo</a></div>`}
     </div>
     <div class="two-col">
-      <div class="panel"><h2 class="sec">Pairs that work</h2>
+      <div class="panel anchor-t" id="lk-pairs"><h2 class="sec">Pairs that work</h2>
         ${pairs.length ? html`<div class="pairs">${pairs.map(p => html`<div class="pair"><div class="two"><button class="mini" onClick=${() => openItem(p.a.id)} title=${p.a.name}><${ItemImg} item=${p.a}/></button><button class="mini" onClick=${() => openItem(p.b.id)} title=${p.b.name}><${ItemImg} item=${p.b}/></button></div><span class="tagline">${p.a.name} + ${p.b.name}</span></div>`)}</div>` : html`<p class="sub">Save, love and wear looks. Pieces that keep showing up together appear here.</p>`}
       </div>
-      <div class="panel"><h2 class="sec">Wear diary</h2>
+      <div class="panel anchor-t" id="lk-diary"><h2 class="sec">Wear diary</h2>
         ${diary.length ? html`<div class="list">${diary.map(x => { const its = arr(x.itemIds).map(itemById).filter(Boolean); return html`<div class="li" key=${x.id}><div class="mini">${its[0] ? html`<${ItemImg} item=${its[0]}/>` : null}</div><div><b>${x.name || its.map(i => i.name).slice(0, 2).join(' + ') || 'Outfit'}</b><small>${fmtDay(x.date)} · ${its.length} pieces</small></div><button class="btn sm ghost" disabled=${!canWrite()} onClick=${() => w('wears/' + x.id, 'delete')}>Undo</button></div>`; })}</div>` : html`<p class="sub">Tap “Wore it today” on any look. Wear counts show which pieces earn their keep.</p>`}
       </div>
     </div>
@@ -1887,6 +2059,7 @@ function Insights() {
   const g = S.gaps;
   return html`<section class="view">
     <div class="vhead"><h1>Wardrobe <em>report</em></h1><p class="sub">What you own, what you reach for, what you’ve let go, and what would round it out.</p></div>
+    <${JumpBar} items=${[['in-gaps', 'Find my gaps'], ['in-wish', 'Wishlist'], ['in-stats', 'Breakdown'], ['in-letgo', 'Let go'], ['in-backup', 'Backup']]}/>
     <div class="kpis">
       <div class="kpi"><b>${act.length}</b><span class="eyebrow">Pieces owned</span></div>
       <div class="kpi"><b>${S.outfits.length}</b><span class="eyebrow">Looks saved</span></div>
@@ -1895,12 +2068,12 @@ function Insights() {
       ${priced.length ? html`<div class="kpi"><b>${money(spend)}</b><span class="eyebrow">Spent (${priced.length} priced)</span></div>` : null}
     </div>
     ${act.length ? html`<div class="two-col">
-      <div class="panel"><h2 class="sec">By category</h2><${Bars} rows=${byCat}/></div>
+      <div class="panel anchor-t" id="in-stats"><h2 class="sec">By category</h2><${Bars} rows=${byCat}/></div>
       <div class="panel"><h2 class="sec">Your palette</h2><div class="palette">${palette.map(c => html`<i style=${'flex:' + c.n + ';background:' + c.hex} title=${c.name + ' · ' + c.n}></i>`)}</div><div class="swnames">${topCols.map(c => html`<span><i style=${'background:' + c.hex}></i>${c.name} <b class="num">${c.n}</b></span>`)}</div></div>
       <div class="panel"><h2 class="sec">Dress-code ladder</h2><${Ladder} counts=${form} labels=${FORMALITY}/></div>
       <div class="panel"><h2 class="sec">Heat scale</h2><${Ladder} counts=${heat} labels=${HEAT} heat=${true}/></div>
       <div class="panel"><h2 class="sec">Vibe coverage</h2><${Bars} rows=${vibes} thin=${3}/>${thinV.length ? html`<p class="sub">Thin on: ${thinV.join(', ')}. Fewer than 3 pieces each.</p>` : null}</div>
-      <div class="panel"><h2 class="sec">Find my gaps</h2><p class="sub">Claude audits the whole rail and names the pieces that would unlock the most new outfits.</p>
+      <div class="panel anchor-t" id="in-gaps"><h2 class="sec">Find my gaps</h2><p class="sub">Claude audits the whole rail and names the pieces that would unlock the most new outfits.</p>
         <div class="row"><button class="btn" disabled=${!aiReady() || (g && g.busy)} onClick=${runGaps}>${g && g.gaps ? 'Run again' : 'Find my gaps'}</button></div>
         ${g && g.busy ? html`<${Thinking} text="Auditing your rail…"/>` : null}
         ${g && g.err ? html`<p style="color:var(--bad)">${g.err}</p>` : null}
@@ -1908,16 +2081,16 @@ function Insights() {
       </div>
     </div>` : html`<${Empty} title="Nothing to report yet" action=${html`<a class="btn" href="#add">Add pieces</a>`}>Once your rail has a few pieces, this page shows your palette, dress-code spread, what you wear and where the gaps are.</${Empty}>`}
     <div class="two-col">
-      <div class="panel"><h2 class="sec">Wishlist <small class="num">${wish.length}</small></h2>
+      <div class="panel anchor-t" id="in-wish"><h2 class="sec">Wishlist <small class="num">${wish.length}</small></h2>
         ${wish.length ? html`<div class="list">${wish.map(x => html`<div class="li" key=${x.id}><span class="miss-pic" style="width:48px;height:56px"><${GarmentThumb} item=${x}/></span><div><b>${x.name}</b><small>${x.why || ''}${x.source ? ' · from ' + ({stylist: 'the stylist', gap: 'gap audit', shop: 'shop check', inspo: 'an inspiration photo', trip: 'a trip plan'}[x.source] || x.source) : ''}</small></div><div class="row"><button class="btn sm soft" disabled=${!canWrite()} onClick=${() => { w('wishlist/' + x.id, 'update', {got: true, gotAt: Date.now()}); toast('Nice. Photograph it on the Add tab to put it on the rail.'); }}>Got it</button><button class="btn sm ghost" disabled=${!canWrite()} onClick=${() => w('wishlist/' + x.id, 'delete')}>Remove</button></div></div>`)}</div>` : html`<p class="sub">Pieces the stylist or gap audit suggests land here when you tap “+ Wishlist”.</p>`}
       </div>
       <div class="panel"><h2 class="sec">Sleeping beauties</h2>
         ${sleeping.length ? html`<p class="sub">Not worn in 90+ days. Style them, or let them go.</p><div class="list">${sleeping.map(it => html`<div class="li" key=${it.id}><button class="mini" onClick=${() => openItem(it.id)}><${ItemImg} item=${it}/></button><div><b>${it.name}</b><small>${lastWorn(it.id) ? 'Last worn ' + fmtDay(lastWorn(it.id)) : 'Never logged'}</small></div><button class="btn sm soft" onClick=${() => styleAround(it.id)}>Style it</button></div>`)}</div>` : html`<p class="sub">Log what you wear for a couple of weeks and the pieces you never reach for show up here.</p>`}
       </div>
-      <div class="panel"><h2 class="sec">Let go <small class="num">${gone.length}</small></h2>
+      <div class="panel anchor-t" id="in-letgo"><h2 class="sec">Let go <small class="num">${gone.length}</small></h2>
         ${gone.length ? html`<div class="list">${gone.slice(0, 20).map(it => html`<div class="li" key=${it.id}><button class="mini" onClick=${() => openItem(it.id)}><${ItemImg} item=${it}/></button><div><b>${it.name}</b><small>${it.discardReason || 'Let go'} · ${fmtDate(it.discardedAt)}</small></div><button class="btn sm ghost" disabled=${!canWrite()} onClick=${() => saveItem(it.id, {status: 'active', discardedAt: null, discardReason: ''})}>Bring back</button></div>`)}</div>` : html`<p class="sub">A record of what you’ve donated, sold or binned, with dates.</p>`}
       </div>
-      <div class="panel"><h2 class="sec">Backup</h2><p class="sub">Download your whole catalogue as a JSON file: pieces, looks, wear diary and wishlist. Photos stay in the app.</p><div class="row"><button class="btn soft" disabled=${!S.downloads || !S.items.length} onClick=${downloadBackup}>Download backup</button></div></div>
+      <div class="panel anchor-t" id="in-backup"><h2 class="sec">Backup</h2><p class="sub">Download your whole catalogue as a JSON file: pieces, looks, wear diary and wishlist. Photos stay in the app.</p><div class="row"><button class="btn soft" disabled=${!S.downloads || !S.items.length} onClick=${downloadBackup}>Download backup</button></div></div>
     </div>
   </section>`;
 }
@@ -1943,7 +2116,13 @@ function Me() {
           <${TextField} id="sz-bottom" label="Bottoms" value=${p.sizeBottom} placeholder="W28 / 10" onSave=${v => setProfile({sizeBottom: v.trim()})}/>
           <${TextField} id="sz-shoe" label="Shoes" value=${p.sizeShoe} placeholder="UK 6" onSave=${v => setProfile({sizeShoe: v.trim()})}/>
         </div></fieldset>
-        <${TextField} id="me-notes" area=${true} label="Notes for your stylist" value=${p.notes} placeholder="5′5″, love high waists, hate showing my arms, never wear yellow, heels only for events…" onSave=${v => setProfile({notes: v.trim().slice(0, 1200)})}/>
+        <fieldset><legend>Make-up</legend>
+          <div class="chips" role="group" aria-label="Make-up level">${[['new', 'New to it'], ['some', 'Know the basics'], ['pro', 'Confident']].map(([k, l]) => html`<${Chip} on=${p.makeupLevel === k} onClick=${() => setProfile({makeupLevel: p.makeupLevel === k ? '' : k})}>${l}</${Chip}>`)}</div>
+          <div class="chips" role="group" aria-label="Facial hair">${[['none', 'No facial hair'], ['stubble', 'Stubble'], ['beard', 'Beard'], ['moustache', 'Moustache']].map(([k, l]) => html`<${Chip} on=${p.facialHair === k} onClick=${() => setProfile({facialHair: p.facialHair === k ? '' : k})}>${l}</${Chip}>`)}</div>
+          <${TextField} id="me-kit" area=${true} label="What’s in your make-up bag" value=${p.makeupKit} placeholder="Tinted moisturiser, concealer, bronzer, black eyeliner pencil, clear brow gel, lip gloss…" onSave=${v => setProfile({makeupKit: v.trim().slice(0, 600)})}/>
+          <div class="row"><button class="btn sm soft" disabled=${!aiReady()} onClick=${() => openGuide(null)}>${I.spark()} Teach me the basics</button></div>
+        </fieldset>
+        <${TextField} id="me-notes" area=${true} label="Notes for your stylist" value=${p.notes} placeholder="Height, what you love showing off, what you never wear, how bold you like to go, anything the stylist should know about you…" onSave=${v => setProfile({notes: v.trim().slice(0, 1200)})}/>
       </div>
     </div>
   </section>`;
@@ -1984,6 +2163,7 @@ function ItemSheet({id}) {
       </div>
       <div class="doll-box"><${Doll} items=${[it]} label=${'Your figure wearing ' + it.name}/></div>
     </div>
+    <${PhotoTools} it=${it} idx=${photoIdx} photos=${photos} setIdx=${setPhotoIdx}/>
     <input class="name-in" id="it-name" key=${'n' + it.id} defaultValue=${it.name} disabled=${!ed} aria-label="Name" onBlur=${e => { const v = e.target.value.trim(); if (v && v !== it.name) sv({name: v}); }} onKeyDown=${e => { if (e.key === 'Enter') e.target.blur(); }}/>
     <div class="stats num"><span>Worn <b>${n}×</b></span>${lw ? html`<span>Last <b>${fmtDay(lw)}</b></span>` : null}${price > 0 ? html`<span>Per wear <b>${money(price / Math.max(1, n))}</b></span>` : null}<span>Added <b>${fmtDate(it.addedAt)}</b></span>${it.status === 'discarded' ? html`<span>Let go <b>${fmtDate(it.discardedAt)}</b></span>` : null}</div>
     <div class="row">
@@ -2031,22 +2211,20 @@ function LookSheet({look}) {
     <div class="item-top" style="grid-template-columns:0.8fr 1.2fr"><div class="doll-box big"><${Doll} items=${items} missing=${arr(o.missing)}/></div><${FlatLay} items=${items} missing=${arr(o.missing)}/></div>
     ${o.why ? html`<p>${o.why}</p>` : null}
     ${o.tip ? html`<p class="tip"><b>Styling</b>${o.tip}</p>` : null}
+      ${o.beauty ? html`<p class="tip"><b>Make-up</b>${o.beauty} <button type="button" class="linkish" onClick=${() => openGuide(o)}>Teach me</button></p>` : null}
     <div class="row">
       ${saved ? html`<button class="btn sm ghost" aria-pressed=${!!saved.loved} disabled=${!canWrite()} onClick=${() => w('outfits/' + saved.id, 'update', {loved: !saved.loved})}>${I.heart(saved.loved)} ${saved.loved ? 'Loved' : 'Love it'}</button>` : html`<button class="btn sm" disabled=${!canWrite()} onClick=${() => saveLook(look)}>Save look</button>`}
       <button class="btn sm ghost" disabled=${!canWrite()} onClick=${() => logWear(o.itemIds, o.name, saved && saved.id)}>Wore it today</button>
     </div>
     ${saved && canWrite() ? del ? html`<div class="confirm"><p>Remove this look from your lookbook? The pieces stay in your closet.</p><div class="row"><button class="btn sm warn" onClick=${async () => { if (await w('outfits/' + saved.id, 'delete')) { closeSheet(); toast('Look removed.'); } }}>Remove look</button><button class="btn sm ghost" onClick=${() => setDel(false)}>Keep</button></div></div>` : html`<div class="row"><button class="btn sm ghost" style="color:var(--bad);border-color:transparent;padding-left:0" onClick=${() => setDel(true)}>Remove from lookbook</button></div>` : null}`;
 }
-function Sheet() {
+function Detail() {
   const sh = S.sheet;
-  const ref = useRef(null);
-  useEffect(() => { const el = ref.current; if (el) { el.scrollTop = 0; const b = el.querySelector('.x'); if (b) b.focus({preventScroll: true}); } }, [sh && (sh.id || (sh.look && (sh.look.key || sh.look.id)))]);
-  return html`<div class="scrim" onClick=${e => { if (e.target === e.currentTarget) closeSheet(); }}>
-    <div class="sheet" ref=${ref} role="dialog" aria-modal="true" aria-label=${sh.type === 'item' ? 'Piece details' : 'Look details'}>
-      <div class="sheet-bar"><span class="grab" aria-hidden="true"></span><span class="eyebrow">${sh.type === 'item' ? 'Piece' : 'Look'}</span><button class="x" aria-label="Close" onClick=${closeSheet}>${I.close()}</button></div>
-      ${sh.type === 'item' ? html`<${ItemSheet} key=${sh.id} id=${sh.id}/>` : html`<${LookSheet} look=${sh.look}/>`}
-    </div>
-  </div>`;
+  const title = sh.type === 'item' ? 'Piece' : sh.type === 'guide' ? 'Make-up lesson' : 'Look';
+  return html`<section class="detail" id="detail" aria-label=${title}>
+    <div class="detail-bar"><button type="button" class="back" onClick=${closeSheet}>${I.back()} Back</button><span class="eyebrow">${title}</span></div>
+    ${sh.type === 'item' ? html`<${ItemSheet} key=${sh.id} id=${sh.id}/>` : sh.type === 'guide' ? html`<${GuideDetail} key=${sh.key} k=${sh.key} look=${sh.look}/>` : html`<${LookSheet} key=${(sh.look && (sh.look.key || sh.look.id)) || 'look'} look=${sh.look}/>`}
+  </section>`;
 }
 
 /* ================= app ================= */
@@ -2058,14 +2236,12 @@ function Boundary({children}) {
 function App() {
   useStore();
   useEffect(() => { const k = e => { if (e.key === 'Escape' && S.sheet) closeSheet(); }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
-  useEffect(() => { document.body.style.overflow = S.sheet ? 'hidden' : ''; }, [!!S.sheet]);
   const r = S.route;
   const V = {closet: Closet, add: Add, style: Style, looks: Looks, insights: Insights, me: Me}[r] || Closet;
   return html`
-    <header class="top"><div class="top-in"><a class="mark" href="#closet">Fitting <em>Room</em></a><${QueuePill}/><a class="me-btn" href="#me" aria-label="Mock me: your figure and stylist notes">${I.head()}</a></div></header>
-    <main class="shell"><${Notices}/><${Boundary} key=${r}><${V}/></${Boundary}></main>
-    <${Tabs}/>
-    ${S.sheet ? html`<${Sheet}/>` : null}
+    <div id="top"></div>
+    <header class="top"><div class="top-in"><a class="mark" href="#closet">Fitting <em>Room</em></a><${QueuePill}/><a class="me-btn" href="#me" aria-label="Mock me: your figure and stylist notes">${I.head()}</a></div><${Tabs}/></header>
+    <main class="shell"><${Notices}/>${S.sheet ? html`<${Boundary} key="detail"><${Detail}/></${Boundary}>` : null}<div hidden=${!!S.sheet}><${Boundary} key=${r}><${V}/></${Boundary}></div></main>
     ${S.toast ? html`<div class="toast" role="status"><span>${S.toast.msg}</span></div>` : null}`;
 }
 const root = document.getElementById('app');
