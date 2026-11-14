@@ -201,8 +201,24 @@ details.manual[open] summary{margin-bottom:12px}
 .miss span{display:flex;flex-direction:column;min-width:0}
 .miss small{color:var(--muted);font-size:12.5px;line-height:1.3}
 .brief{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:16px;display:flex;flex-direction:column;gap:12px}
-.brief textarea{width:100%;border:0;background:none;resize:none;font-family:var(--f-display);font-size:21px;line-height:1.25;min-height:64px;outline:none}
-.brief textarea::placeholder{color:var(--muted);font-style:italic}
+.brief textarea{width:100%;border:1.5px solid var(--line);background:var(--surface-2);border-radius:12px;padding:12px 14px;resize:vertical;font-family:var(--f-body);font-size:17px;line-height:1.4;min-height:84px;outline:none}
+.brief textarea:focus{border-color:var(--plum)}
+.brief textarea::placeholder{color:var(--muted)}
+.ask-label{font-family:var(--f-display);font-size:24px;font-weight:600;line-height:1.05}
+.ask-box{background:var(--plum);color:var(--on-plum);border-radius:var(--r-l);padding:16px;display:flex;flex-direction:column;gap:10px}
+.ask-box p{font-size:13.5px;opacity:.85}
+.ask-row{display:flex;gap:8px;align-items:flex-end}
+@media (max-width:520px){.ask-row{flex-direction:column;align-items:stretch}.ask-row .btn{align-self:flex-end}}
+.ask-row textarea{flex:1;min-width:0;border:0;border-radius:12px;padding:11px 13px;font-size:16px;line-height:1.35;resize:none;background:var(--surface);color:var(--ink);min-height:84px;outline:none;width:100%}
+.ask-row textarea::placeholder{color:var(--muted)}
+.btn.inv{background:var(--on-plum);color:var(--plum);border-color:var(--on-plum)}
+.day{display:grid;grid-template-columns:58px 1fr;gap:6px 10px;padding:10px 0;border-top:1px solid var(--line);align-items:baseline}
+.day:first-child{border-top:0}
+.day b{font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.day .chips{grid-column:2}
+.li.pack{cursor:pointer}
+.li.pack input{width:24px;height:24px;accent-color:var(--plum);margin:0}
+.li.pack.done b{text-decoration:line-through;color:var(--muted)}
 .anchor{display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:12px;padding:6px 10px 6px 6px}
 .anchor .mini{width:40px;height:48px}
 .thinking{display:flex;align-items:center;gap:12px;color:var(--muted)}
@@ -460,6 +476,7 @@ const BRIEFS = [
   ['Gym','Gym session: functional but cute'],
   ['Sofa day','Cosy lounge day at home'],
   ['Festival','Festival: fun, statement, practical shoes'],
+  ['Holiday','Going on holiday for 7 days somewhere hot: plan my day and night looks and what to pack'],
   ['Weekend away','Pack a capsule for a 3-day weekend away: pieces that mix and match'],
 ];
 const WEATHER = ['Any','Hot','Mild','Cold','Rainy'];
@@ -513,8 +530,10 @@ const S = {
   sheet:null, toast:null, anchorId:null,
   styleResult: loadLS('fr.style', null), styleBusy:false, styleErr:null, styleCtl:null,
   shop:null, gaps:null,
+  trips:[], brief:'', weather:'Any',
   inspiration:[], ins:null, inspoDraft:[], maxImages:1, styleMode: loadLS('fr.mode', 'vibe') === 'photo' ? 'photo' : 'vibe',
 };
+if (S.styleResult) { S.brief = S.styleResult.brief || ''; S.weather = S.styleResult.weather || 'Any'; }
 const listeners = new Set();
 let emitQueued = false;
 function emit() { if (emitQueued) return; emitQueued = true; queueMicrotask(() => { emitQueued = false; listeners.forEach(f => f()); }); }
@@ -579,7 +598,7 @@ async function init() {
 function subscribe() {
   const timer = setTimeout(() => { if (!S.confirmed) { S.slow = true; emit(); } }, 10000);
   const seen = snap => { if (snap && snap.metadata && !snap.metadata.fromCache && !S.confirmed) { S.confirmed = true; S.slow = false; clearTimeout(timer); } };
-  for (const name of ['items', 'outfits', 'wears', 'photos', 'wishlist', 'inspiration']) {
+  for (const name of ['items', 'outfits', 'wears', 'photos', 'wishlist', 'inspiration', 'trips']) {
     S.db.collection(name).onSnapshot(snap => {
       S[name] = snap.docs.map(d => ({id: d.id, ...d.data()}));
       S.loaded[name] = true; seen(snap);
@@ -933,19 +952,27 @@ function stylePrompt(brief, weather, anchorId, pool) {
   const inspo = [...S.inspiration].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 6).map(x => '- ' + x.name + ': ' + str(x.summary).slice(0, 140)).join('\n');
   return `You are a sharp, warm personal stylist. Build outfits ONLY from the wardrobe below, citing item ids exactly.
 
-Brief: ${brief}
-Weather: ${weather && weather !== 'Any' ? weather : 'not specified'}
+Today is ${new Date().toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'})}.
+What they told you: ${brief}
+Weather: ${weather && weather !== 'Any' ? weather : 'not specified (work it out from the place and time of year if they mention one)'}
 ${anchor ? 'Every outfit must include: ' + anchor.id + ' (' + anchor.name + ')\n' : ''}About them:
 ${aboutMe()}
 ${loved ? 'Looks they loved before (taste signal):\n' + loved + '\n' : ''}${inspo ? 'Looks they saved as inspiration (taste signal):\n' + inspo + '\n' : ''}${recent.length ? 'Worn in the last week, so use sparingly: ' + [...new Set(recent)].join(', ') + '\n' : ''}
 Wardrobe (id | name | type | colours | pattern | formality 1-5 | heat 1-5 | vibes | seasons | made for | wear count):
 ${styleLines(pool)}
 
-Make 3 distinct outfits that hit the brief. Each must be complete for the occasion: a top and a bottom, or a dress or jumpsuit; shoes whenever they own suitable ones; add outerwear, a bag or accessories when they help. Respect the weather. Sleepwear, loungewear and underwear only belong in outfits for leaving the house when marked wear out yes or styled, and then the tip says how to make it work. Never put an id in itemIds that is not in the wardrobe list.
-For each outfit, fill missing with: first, anything ESSENTIAL the outfit still lacks because they own nothing suitable (for example no shoes that work with it, or no coat for cold weather), with need "essential"; then 0 to 2 pieces they do NOT own that would make it pop, with need "extra". If they own everything the outfit needs, include no essential entries.
+First decide what they need. If they are going away for one or more nights (a holiday, trip, weekend away, festival, work trip), plan the trip and reply in the TRIP shape. Otherwise reply in the LOOKS shape with 3 distinct outfits.
 
-Reply with only JSON:
-{"read":"one sentence on how well their wardrobe covers this brief","outfits":[{"name":"2-4 word look name","itemIds":["id1","id2"],"why":"1-2 sentences on why it works","tip":"one styling tip (tuck, roll, layer, hair, make-up)","missing":[{"name":"Gold hoop earrings","category":"accessory","silhouette":"earrings","hex":"#c9a23a","why":"short reason","need":"extra"}]}]}
+Every outfit must be complete for the occasion: a top and a bottom, or a dress or jumpsuit; shoes whenever they own suitable ones; add outerwear, a bag or accessories when they help. Respect the weather. Sleepwear, loungewear and underwear only belong in outfits for leaving the house when marked wear out yes or styled, and then the tip says how to make it work. Never put an id in itemIds that is not in the wardrobe list.
+For each outfit (or trip look), fill missing with: first, anything ESSENTIAL the outfit still lacks because they own nothing suitable (for example no shoes that work with it, or no coat for cold weather), with need "essential"; then 0 to 2 pieces they do NOT own that would make it pop, with need "extra". If they own everything the outfit needs, include no essential entries.
+
+LOOKS shape (reply with only this JSON):
+{"kind":"looks","read":"one sentence on how well their wardrobe covers this brief","outfits":[{"name":"2-4 word look name","itemIds":["id1","id2"],"why":"1-2 sentences on why it works","tip":"one styling tip (tuck, roll, layer, hair, make-up)","missing":[{"name":"Gold hoop earrings","category":"accessory","silhouette":"earrings","hex":"#c9a23a","why":"short reason","need":"extra"}]}]}
+
+TRIP shape (reply with only this JSON):
+{"kind":"trip","read":"one or two sentences on the plan and how well their wardrobe covers it","trip":{"where":"the destination they named","days":7,"weather":"what to expect there at that time of year: daytime and evening temperatures, sun or rain"},"looks":[{"name":"2-4 word look name","slot":"day|night|beach|travel","itemIds":["id1","id2"],"why":"1 sentence","tip":"one styling tip","missing":[]}],"plan":[{"day":1,"label":"Fly out, pool, first night out","looks":[0,4]}],"pack":["id of every owned piece to pack"],"buy":[{"name":"Colour + item","category":"...","silhouette":"...","hex":"#rrggbb","why":"short reason","need":"essential|extra"}],"tips":["short packing or styling tip"]}
+Trip rules: 4 to 8 looks built from one packable capsule that mixes and matches, covering the days, nights and activities the trip implies (beach and pool, dinners, nights out, travel day); reuse pieces across looks. plan has one entry per day, each listing the 0-based indexes of the looks for that day. pack lists every owned piece used in the looks. buy lists what to get before going: need essential when the trip can't be done properly without it (for example no swimwear for a beach holiday, no sandals for the heat), extra for things that would make it; up to 5. tips: up to 4.
+
 Allowed categories: ${CAT_KEYS.join(', ')}. Silhouettes for missing pieces:
 ${silList()}`;
 }
@@ -957,20 +984,49 @@ async function runStylist(brief, weather) {
   try {
     const res = await S.sample.json(stylePrompt(brief, weather, S.anchorId, pool), {cache: false, signal: ctl.signal});
     const ids = new Set(pool.map(i => i.id));
-    const outfits = arr(res && res.outfits).slice(0, 4).map(o => ({
+    const look = o => ({
       key: uid('o'), name: str(o && o.name).slice(0, 60) || 'Look',
       itemIds: [...new Set(arr(o && o.itemIds).map(String).filter(id => ids.has(id)))],
       why: str(o && o.why).slice(0, 420), tip: str(o && o.tip).slice(0, 260),
-      missing: arr(o && o.missing).slice(0, 2).map(normMissing).filter(Boolean), brief,
-    })).filter(o => o.itemIds.length);
-    if (!outfits.length) throw {code: 'no_outfits'};
-    S.styleResult = {brief, weather, anchorId: S.anchorId, read: str(res && res.read).slice(0, 300), outfits, at: Date.now()};
+      missing: arr(o && o.missing).slice(0, 4).map(normMissing).filter(Boolean), brief,
+    });
+    if (res && res.kind === 'trip' && Array.isArray(res.looks)) {
+      const raw = res.looks.slice(0, 8).map((o, i) => ({...look(o), slot: ['day', 'night', 'beach', 'travel'].includes(o && o.slot) ? o.slot : 'day', orig: i}));
+      const looks = raw.filter(o => o.itemIds.length);
+      if (!looks.length) throw {code: 'no_outfits'};
+      const idx = new Map(looks.map((o, i) => [o.orig, i]));
+      looks.forEach(o => { delete o.orig; });
+      const plan = arr(res.plan).slice(0, 21).map((d, i) => ({day: clampInt(d && d.day, 1, 60, i + 1), label: str(d && d.label).slice(0, 120), looks: [...new Set(arr(d && d.looks).map(n => idx.get(Number(n))).filter(n => n != null))]}));
+      const used = looks.flatMap(o => o.itemIds);
+      const t = (res && res.trip) || {};
+      const result = {
+        kind: 'trip', brief, weather, anchorId: S.anchorId, read: str(res.read).slice(0, 400),
+        trip: {where: str(t.where).slice(0, 60), days: clampInt(t.days, 1, 60, plan.length || 1), weather: str(t.weather).slice(0, 220)},
+        outfits: looks, plan, pack: [...new Set([...arr(res.pack).map(String).filter(id => ids.has(id)), ...used])],
+        buy: arr(res.buy).slice(0, 6).map(normMissing).filter(Boolean), tips: arr(res.tips).map(x => str(x).slice(0, 180)).filter(Boolean).slice(0, 5),
+        packed: [], at: Date.now(),
+      };
+      if (canWrite()) { const id = uid('tr'); if (await w('trips/' + id, 'set', {...result, createdAt: Date.now()})) result.id = id; }
+      S.styleResult = result;
+    } else {
+      const outfits = arr(res && res.outfits).slice(0, 4).map(look).filter(o => o.itemIds.length);
+      if (!outfits.length) throw {code: 'no_outfits'};
+      S.styleResult = {kind: 'looks', brief, weather, anchorId: S.anchorId, read: str(res && res.read).slice(0, 300), outfits, at: Date.now()};
+    }
     saveLS('fr.style', S.styleResult);
   } catch (e) {
     if (e && e.code === 'cancelled') {}
     else { if (AI_OFF.has(e && e.code)) S.aiOff = e.code; S.styleErr = errCopy(e); }
   } finally { S.styleBusy = false; S.styleCtl = null; emit(); }
 }
+function askStylist(text) {
+  const b = str(text); if (!b) return;
+  S.brief = b; S.styleMode = 'vibe'; saveLS('fr.mode', 'vibe');
+  go('style');
+  if (aiReady() && activeItems().length >= 3) runStylist(b, S.weather || 'Any'); else emit();
+}
+function openTrip(t) { S.styleResult = {...clean(t), kind: 'trip'}; S.brief = t.brief || ''; S.weather = t.weather || 'Any'; S.styleMode = 'vibe'; saveLS('fr.mode', 'vibe'); saveLS('fr.style', S.styleResult); if (S.route === 'style') { try { scrollTo(0, 0); } catch {} emit(); } else go('style'); }
+async function deleteTrip(r) { if (r.id && !(await w('trips/' + r.id, 'delete'))) return; if (S.styleResult === r) { S.styleResult = null; saveLS('fr.style', null); } toast('Trip removed.'); emit(); }
 async function runGaps() {
   if (!aiReady()) return;
   const pool = activeItems();
@@ -1113,7 +1169,7 @@ async function boughtIt() {
 }
 async function downloadBackup() {
   if (!S.downloads) { toast('Downloads aren’t available in this view.'); return; }
-  const data = JSON.stringify({app: 'Fitting Room', exportedAt: new Date().toISOString(), profile: S.profile, items: S.items, outfits: S.outfits, wears: S.wears, wishlist: S.wishlist, inspiration: S.inspiration}, null, 2);
+  const data = JSON.stringify({app: 'Fitting Room', exportedAt: new Date().toISOString(), profile: S.profile, items: S.items, outfits: S.outfits, wears: S.wears, wishlist: S.wishlist, inspiration: S.inspiration, trips: S.trips}, null, 2);
   try { await S.downloads.save({filename: 'fitting-room-backup-' + today() + '.json', data}); toast('Backup saved.'); }
   catch (e) { if (e && e.code !== 'declined') toast('The backup couldn’t be saved here.'); }
 }
@@ -1432,6 +1488,18 @@ function Tile({it}) {
     <div class="tagline"><span>${ONE[it.category] || 'Piece'}</span><span>·</span><span class="num">${it.status === 'discarded' ? 'let go' : n ? n + '× worn' : 'unworn'}</span><span class="dots">${arr(it.colors).slice(0, 3).map(c => html`<i style=${'background:' + colorOf(c)}></i>`)}</span></div>
   </button>`;
 }
+function AskBox() {
+  const [t, setT] = useState('');
+  const send = () => { if (t.trim()) { askStylist(t); setT(''); } };
+  return html`<div class="ask-box">
+    <label class="ask-label" for="ask-in">What’s happening?</label>
+    <div class="ask-row">
+      <textarea id="ask-in" rows="2" placeholder="Booked a week in Gran Canaria and want to look my hottest…" value=${t} onInput=${e => setT(e.target.value)} onKeyDown=${e => { if (e.key === 'Enter' && !e.shiftKey && window.matchMedia('(pointer:fine)').matches) { e.preventDefault(); send(); } }}></textarea>
+      <button class="btn inv" disabled=${!t.trim()} onClick=${send}>Style me</button>
+    </div>
+    <p>Tell your stylist anything: a trip and how long for, a date, a dress code, the weather, how you want to feel.</p>
+  </div>`;
+}
 function Closet() {
   const [q, setQ] = useState(''); const [cat, setCat] = useState('all'); const [view, setView] = useState('active'); const [sort, setSort] = useState('new'); const [use, setUse] = useState('all');
   const all = S.items, examples = all.filter(i => i.example);
@@ -1455,6 +1523,7 @@ function Closet() {
   const real = counts.active - examples.filter(i => stat(i) === 'active').length;
   return html`<section class="view">
     <div class="vhead"><h1>Your <em>closet</em></h1><p class="sub num">${loading ? 'Loading your pieces…' : `${counts.active} piece${counts.active === 1 ? '' : 's'} on the rail${counts.review ? ` · ${counts.review} waiting for you to check` : ''}${counts.discarded ? ` · ${counts.discarded} let go` : ''}`}</p></div>
+    <${AskBox}/>
     ${examples.length ? html`<div class="note hi"><p><b>${examples.length} example pieces</b> are hanging here so you can try the stylist straight away. Your own photos will join them.</p><button class="btn sm" disabled=${!canWrite()} onClick=${async () => { for (const it of examples) await w('items/' + it.id, 'delete'); toast('Examples removed.'); }}>Remove examples</button></div>` : null}
     <div class="toolbar">
       <div class="search">${I.search()}<input id="closet-search" type="search" placeholder="Search colour, brand, vibe…" value=${q} onInput=${e => setQ(e.target.value)} aria-label="Search your closet"/></div>
@@ -1645,6 +1714,42 @@ function WhatsMissing({r}) {
     ${all.length > 1 && canWrite() ? html`<div class="row"><button class="btn sm soft" disabled=${all.every(m => inWishlist(m))} onClick=${() => addWishMany(all, 'inspo')}>Add all missing to wishlist</button></div>` : null}
   </div>`;
 }
+const SLOT = {day: 'Day look', night: 'Night look', beach: 'Beach & pool', travel: 'Travel day'};
+function TripResult({r}) {
+  const [del, setDel] = useState(false);
+  const live = r.id ? S.trips.find(t => t.id === r.id) : null;
+  const packed = new Set(arr((live || r).packed));
+  const pack = arr(r.pack).map(itemById).filter(Boolean);
+  const trip = r.trip || {};
+  const toggle = id => {
+    const next = packed.has(id) ? [...packed].filter(x => x !== id) : [...packed, id];
+    if (r.id && live && canWrite()) w('trips/' + r.id, 'update', {packed: next});
+    else { r.packed = next; saveLS('fr.style', S.styleResult); emit(); }
+  };
+  const jump = key => { const el = document.getElementById('look-' + key); if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'}); };
+  const ess = arr(r.buy).filter(m => m.need === 'essential'), extra = arr(r.buy).filter(m => m.need !== 'essential');
+  const done = pack.filter(it => packed.has(it.id)).length;
+  return html`<div style="display:flex;flex-direction:column;gap:12px">
+    <div class="panel">
+      <span class="eyebrow">Trip plan${r.id ? ' · kept in Looks' : ''}</span>
+      <h3 class="look-name" style="font-size:30px">${[trip.where, trip.days ? trip.days + ' days' : ''].filter(Boolean).join(' · ') || 'Your trip'}</h3>
+      ${trip.weather ? html`<p class="tip"><b>Weather</b>${trip.weather}</p>` : null}
+      ${r.read ? html`<p>${r.read}</p>` : null}
+      ${ess.length
+        ? html`<div class="complete need">${I.alert()}<span><b>Before you go, you need ${listNames(ess)}.</b> Everything else comes from your wardrobe.</span></div>`
+        : html`<div class="complete ok">${I.check()}<span><b>You can pack this trip from your own wardrobe.</b>${extra.length ? ' A couple of extras would make it.' : ''}</span></div>`}
+      ${ess.length ? html`<div class="mgroup"><div class="eyebrow">Get before you go</div>${ess.map(m => html`<${MissRow} m=${m} source="trip"/>`)}</div>` : null}
+      ${extra.length ? html`<div class="mgroup"><div class="eyebrow">Would make the trip</div>${extra.map(m => html`<${MissRow} m=${m} source="trip"/>`)}</div>` : null}
+      ${arr(r.buy).length > 1 && canWrite() ? html`<div class="row"><button class="btn sm soft" disabled=${r.buy.every(m => inWishlist(m))} onClick=${() => addWishMany(r.buy, 'trip')}>Add all to wishlist</button></div>` : null}
+    </div>
+    ${arr(r.plan).length ? html`<div class="panel"><h2 class="sec">Day by day</h2><div class="list">${r.plan.map(d => html`<div class="day"><b class="num">Day ${d.day}</b><span>${d.label}</span>${arr(d.looks).length ? html`<span class="chips">${d.looks.map(n => r.outfits[n] ? html`<button type="button" class="chip" onClick=${() => jump(r.outfits[n].key)}>${r.outfits[n].name}</button>` : null)}</span>` : null}</div>`)}</div></div>` : null}
+    <h2 class="sec">The looks <small class="num">${r.outfits.length}</small></h2>
+    ${r.outfits.map((o, i) => html`<div id=${'look-' + o.key} key=${o.key} style="scroll-margin-top:84px"><${OutfitCard} o=${o} idx=${i} eyebrow=${(SLOT[o.slot] || 'Look') + ' · ' + (i + 1)}/></div>`)}
+    ${pack.length ? html`<div class="panel"><div class="row" style="justify-content:space-between"><h2 class="sec">Packing list</h2><span class="eyebrow num">${done} of ${pack.length} packed</span></div><div class="bar"><i style=${'width:' + Math.round(100 * done / pack.length) + '%'}></i></div><div class="list">${pack.map(it => html`<label class=${'li pack' + (packed.has(it.id) ? ' done' : '')} for=${'pk-' + it.id} key=${it.id}><span class="mini"><${ItemImg} item=${it}/></span><div><b>${it.name}</b><small>${ONE[it.category] || ''}</small></div><input type="checkbox" id=${'pk-' + it.id} checked=${packed.has(it.id)} onChange=${() => toggle(it.id)}/></label>`)}</div></div>` : null}
+    ${arr(r.tips).length ? html`<div class="panel"><h2 class="sec">Packing tips</h2><ul class="moves">${r.tips.map(x => html`<li>${x}</li>`)}</ul></div>` : null}
+    ${canWrite() ? html`<div class="row">${del ? html`<button class="btn sm warn" onClick=${() => deleteTrip(r)}>Remove trip</button><button class="btn sm ghost" onClick=${() => setDel(false)}>Keep</button>` : html`<button class="btn sm ghost" onClick=${() => setDel(true)}>Remove this trip</button>`}</div>` : null}
+  </div>`;
+}
 const QLABEL = {exact: 'You own it', close: 'Close match', 'stand-in': 'Stand-in', none: 'Missing'};
 function InspoResult({r, previews}) {
   const [del, setDel] = useState(false);
@@ -1698,16 +1803,17 @@ function InspoPanel() {
 }
 function Style() {
   const res = S.styleResult;
-  const [brief, setBrief] = useState(res ? res.brief : ''); const [weather, setWeather] = useState(res ? res.weather || 'Any' : 'Any');
+  const brief = S.brief, setBrief = v => { S.brief = v; emit(); };
+  const weather = S.weather, setWeather = v => { S.weather = v; emit(); };
   const anchor = S.anchorId && itemById(S.anchorId);
   const pool = activeItems();
   const go2 = () => { const b = brief.trim(); if (b) runStylist(b, weather); };
   return html`<section class="view">
-    <div class="vhead"><h1>Style <em>me</em></h1><p class="sub">Say how you want to feel, from boardroom to out-out, or show it a photo of a look you love. The stylist works from what’s on your rail and flags the one or two pieces that would make it pop.</p></div>
-    <${Seg} label="Style from" value=${S.styleMode} onChange=${setStyleMode} options=${[['vibe', 'Describe a vibe'], ['photo', 'Recreate a photo']]}/>
+    <div class="vhead"><h1>Style <em>me</em></h1><p class="sub">Tell it what’s going on, from a boardroom meeting to a week away, or show it a photo of a look you love. The stylist works from what’s on your rail and tells you what’s missing.</p></div>
+    <${Seg} label="Style from" value=${S.styleMode} onChange=${setStyleMode} options=${[['vibe', 'Tell it what’s happening'], ['photo', 'Recreate a photo']]}/>
     ${S.styleMode === 'photo' ? html`<${InspoPanel}/>` : html`<div class="brief">
-      <label class="vh" for="brief-in">Describe the vibe</label>
-      <textarea id="brief-in" rows="2" placeholder="Drinks with the girls, want to feel hot but it’s freezing…" value=${brief} onInput=${e => setBrief(e.target.value)} onKeyDown=${e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) go2(); }}></textarea>
+      <label class="ask-label" for="brief-in">What’s happening?</label>
+      <textarea id="brief-in" rows="3" placeholder="Booked a week in Gran Canaria and want to look my hottest. Or: work drinks Friday, it’s freezing, want to look sharp…" value=${brief} onInput=${e => setBrief(e.target.value)} onKeyDown=${e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) go2(); }}></textarea>
       <div class="chips">${BRIEFS.map(([l, t]) => html`<${Chip} on=${brief === t} onClick=${() => setBrief(t)}>${l}</${Chip}>`)}</div>
       <div class="row" style="justify-content:space-between"><${Seg} label="Weather" value=${weather} onChange=${setWeather} options=${WEATHER.map(x => [x, x === 'Any' ? 'Any weather' : x])}/></div>
       ${anchor ? html`<div class="anchor"><span class="mini"><${ItemImg} item=${anchor}/></span><span style="flex:1;min-width:0"><span class="eyebrow">Built around</span><br/><b>${anchor.name}</b></span><button class="x" aria-label="Stop building around this piece" onClick=${() => { S.anchorId = null; emit(); }}>${I.close()}</button></div>` : null}
@@ -1715,11 +1821,11 @@ function Style() {
         ${S.styleBusy ? html`<button class="btn ghost" onClick=${() => S.styleCtl && S.styleCtl.abort()}>Stop</button>` : html`<button class="btn" disabled=${!brief.trim() || !aiReady() || pool.length < 3} onClick=${go2}>${I.spark()} ${res && res.brief === brief.trim() ? 'Try again' : 'Style me'}</button>`}
         ${pool.length < 3 && S.loaded.items ? html`<span class="sub">Add at least 3 pieces first.</span>` : null}
       </div>
-      ${S.styleBusy ? html`<${Thinking} text="Pulling pieces off the rail… usually 20–60 seconds."/>` : null}
+      ${S.styleBusy ? html`<${Thinking} text="Pulling pieces off the rail… usually 20–60 seconds, a minute or two for a trip."/>` : null}
       ${S.styleErr ? html`<p style="color:var(--bad)">${S.styleErr}</p>` : null}
       ${!S.sample && S.caps !== 'loading' ? html`<p class="sub">The stylist needs this page open in Claude.</p>` : S.aiOff ? html`<p class="sub">Claude isn’t available to this page right now${S.aiOff === 'not_granted' ? '. Reload to be asked again.' : '.'}</p>` : null}
     </div>
-    ${res && res.outfits ? html`<div style="display:flex;flex-direction:column;gap:12px">
+    ${res && res.kind === 'trip' && res.outfits ? html`<${TripResult} key=${res.id || res.at} r=${res}/>` : res && res.outfits ? html`<div style="display:flex;flex-direction:column;gap:12px">
       <div class="vhead"><span class="eyebrow">For “${res.brief}”${res.weather && res.weather !== 'Any' ? ' · ' + res.weather.toLowerCase() : ''}</span>${res.read ? html`<p>${res.read}</p>` : null}</div>
       <div class="looks-2" style="display:flex;flex-direction:column;gap:12px">${res.outfits.map((o, i) => html`<${OutfitCard} key=${o.key} o=${o} idx=${i}/>`)}</div>
     </div>` : null}`}
@@ -1742,6 +1848,10 @@ function Looks() {
     <div class="vhead"><h1>Look<em>book</em></h1><p class="sub">Saved outfits, looks you want to recreate, the pairings that keep working, and a diary of what you actually wore.</p></div>
     ${looks.length ? html`<div class="lookbook">${looks.map(o => { const items = arr(o.itemIds).map(itemById).filter(Boolean); const n = wearsByLook.get(o.id) || 0; return html`<div class="lb" key=${o.id} style="position:relative"><button type="button" class="bare" style="gap:8px" onClick=${() => openLook({...o, savedId: o.id})}><div class="doll-box"><${Doll} items=${items} missing=${arr(o.missing)}/></div><h3>${o.name}</h3><span class="tagline num">${n ? 'Worn ' + n + '×' : 'Not worn yet'} · ${items.length} pieces</span></button><button class="heart" aria-pressed=${!!o.loved} aria-label=${o.loved ? 'Unlove look' : 'Love look'} disabled=${!canWrite()} onClick=${() => w('outfits/' + o.id, 'update', {loved: !o.loved})}>${I.heart(o.loved)}</button></div>`; })}</div>` :
       html`<${Empty} title="No saved looks yet" action=${html`<a class="btn" href="#style">Get styled</a>`}>Ask the stylist for a vibe and save the outfits you like. Hearting a look teaches the stylist your taste.</${Empty}>`}
+    <div class="panel"><h2 class="sec">Trips <small class="num">${S.trips.length}</small></h2>
+      ${S.trips.length ? html`<div class="list">${[...S.trips].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map(t => { const first = itemById(arr(arr(t.outfits)[0] && t.outfits[0].itemIds)[0]); const n = arr(t.pack).length, k = arr(t.packed).filter(id => arr(t.pack).includes(id)).length; return html`<div class="li" key=${t.id}><span class="mini">${first ? html`<${ItemImg} item=${first}/>` : null}</span><div><b>${[t.trip && t.trip.where, t.trip && t.trip.days ? t.trip.days + ' days' : ''].filter(Boolean).join(' · ') || 'Trip'}</b><small class="num">${fmtDate(t.createdAt)} · ${arr(t.outfits).length} looks · ${k} of ${n} packed</small></div><button class="btn sm soft" onClick=${() => openTrip(t)}>Open</button></div>`; })}</div>` :
+        html`<p class="sub">Tell the stylist you’re going away, where and for how long. It plans day and night looks, a packing list you can tick off, and what to buy first. Trips are kept here.</p>`}
+    </div>
     <div class="panel"><h2 class="sec">Inspiration board <small class="num">${S.inspiration.length}</small></h2>
       ${S.inspiration.length ? html`<div class="board">${[...S.inspiration].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map(x => { const el = arr(x.elements); return html`<button type="button" class="bare" key=${x.id} onClick=${() => openInspo(x)}><img src=${imgUrl(arr(x.imageIds)[0])} alt=""/><b>${x.name}</b><span class="tagline num">You own ${el.filter(e => e.match).length} of ${el.length}</span></button>`; })}</div>` :
         html`<p class="sub">Seen a look you want? Add the photo on the Style tab and get three ways to recreate it from your closet. Each one is kept here.</p><div class="row"><a class="btn sm soft" href="#style" onClick=${() => setStyleMode('photo')}>Recreate a photo</a></div>`}
@@ -1799,7 +1909,7 @@ function Insights() {
     </div>` : html`<${Empty} title="Nothing to report yet" action=${html`<a class="btn" href="#add">Add pieces</a>`}>Once your rail has a few pieces, this page shows your palette, dress-code spread, what you wear and where the gaps are.</${Empty}>`}
     <div class="two-col">
       <div class="panel"><h2 class="sec">Wishlist <small class="num">${wish.length}</small></h2>
-        ${wish.length ? html`<div class="list">${wish.map(x => html`<div class="li" key=${x.id}><span class="miss-pic" style="width:48px;height:56px"><${GarmentThumb} item=${x}/></span><div><b>${x.name}</b><small>${x.why || ''}${x.source ? ' · from ' + ({stylist: 'the stylist', gap: 'gap audit', shop: 'shop check', inspo: 'an inspiration photo'}[x.source] || x.source) : ''}</small></div><div class="row"><button class="btn sm soft" disabled=${!canWrite()} onClick=${() => { w('wishlist/' + x.id, 'update', {got: true, gotAt: Date.now()}); toast('Nice. Photograph it on the Add tab to put it on the rail.'); }}>Got it</button><button class="btn sm ghost" disabled=${!canWrite()} onClick=${() => w('wishlist/' + x.id, 'delete')}>Remove</button></div></div>`)}</div>` : html`<p class="sub">Pieces the stylist or gap audit suggests land here when you tap “+ Wishlist”.</p>`}
+        ${wish.length ? html`<div class="list">${wish.map(x => html`<div class="li" key=${x.id}><span class="miss-pic" style="width:48px;height:56px"><${GarmentThumb} item=${x}/></span><div><b>${x.name}</b><small>${x.why || ''}${x.source ? ' · from ' + ({stylist: 'the stylist', gap: 'gap audit', shop: 'shop check', inspo: 'an inspiration photo', trip: 'a trip plan'}[x.source] || x.source) : ''}</small></div><div class="row"><button class="btn sm soft" disabled=${!canWrite()} onClick=${() => { w('wishlist/' + x.id, 'update', {got: true, gotAt: Date.now()}); toast('Nice. Photograph it on the Add tab to put it on the rail.'); }}>Got it</button><button class="btn sm ghost" disabled=${!canWrite()} onClick=${() => w('wishlist/' + x.id, 'delete')}>Remove</button></div></div>`)}</div>` : html`<p class="sub">Pieces the stylist or gap audit suggests land here when you tap “+ Wishlist”.</p>`}
       </div>
       <div class="panel"><h2 class="sec">Sleeping beauties</h2>
         ${sleeping.length ? html`<p class="sub">Not worn in 90+ days. Style them, or let them go.</p><div class="list">${sleeping.map(it => html`<div class="li" key=${it.id}><button class="mini" onClick=${() => openItem(it.id)}><${ItemImg} item=${it}/></button><div><b>${it.name}</b><small>${lastWorn(it.id) ? 'Last worn ' + fmtDay(lastWorn(it.id)) : 'Never logged'}</small></div><button class="btn sm soft" onClick=${() => styleAround(it.id)}>Style it</button></div>`)}</div>` : html`<p class="sub">Log what you wear for a couple of weeks and the pieces you never reach for show up here.</p>`}
